@@ -1,7 +1,6 @@
 import torch
 from torch import nn
-from torch.utils.data import DataLoader, Dataset
-import numpy as np
+from torch.utils.data import DataLoader
 
 
 # generic fully-connected neural network class
@@ -24,25 +23,17 @@ class NeuralNetwork(nn.Module):
         return logits
 
 
-def train_gdro(dataloader: DataLoader, model: nn.Module, loss_fn, num_groups: int, optimizer, device):
+def train(dataloader: DataLoader, model: nn.Module, loss_fn, optimizer, device):
     model.train()
-
-    # initialize group weights
 
     for (X, y) in enumerate(dataloader):
 
-        # X is a float tensor of size (number of groups, batch size, number of features)
-        # y is a long tensor of size (number of groups, batch size)
         X, y = X.to(device), y.to(device)
 
         # Compute prediction error
-        # pred and loss are stored by group
-        num_groups = len(X)
-        pred = [model(X[group]) for group in range(num_groups)]
-        loss = [loss_fn(pred[group], y[group]) for group in pred]
 
-        # Update weights for group g
-        q = []
+        pred = model(X)
+        loss = loss_fn(pred, y)
 
         # Backpropagation
         optimizer.zero_grad()
