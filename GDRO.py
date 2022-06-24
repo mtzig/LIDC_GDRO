@@ -23,12 +23,12 @@ class NeuralNetwork(nn.Module):
         return logits
 
 
-def train(dataloader: DataLoader, model: nn.Module, loss_fn, optimizer, device):
+def train(dataloader: SubtypedDataLoader, model: nn.Module, loss_fn, optimizer, device):
     model.train()
 
-    for (X, y) in enumerate(dataloader):
+    for minibatch in enumerate(dataloader):
 
-        X, y = X.to(device), y.to(device)
+        loss = GDRO_loss(minibatch)
 
         # Compute prediction error
 
