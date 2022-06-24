@@ -1,3 +1,6 @@
+import torch
+from torch.utils.data import DataLoader, Dataset
+
 # functions to create our datasets and dataloaders
 
 
@@ -25,9 +28,9 @@ class NoduleDataset(Dataset):
     
     return self.feature_array[idx], self.label[idx]
 
-class SubtypedDataLoader()
+class SubtypedDataLoader():
 
-    def __init__(subclass_data, batch_size, shuffle=True):
+    def __init__(self, subclass_data, batch_size, shuffle=True):
         self.dataloaders = []
 
         for subclass in subclass_data:
