@@ -1,5 +1,6 @@
 import torch
 from torch.utils.data import DataLoader, Dataset
+from itertools import cycle
 
 # functions to create our datasets and dataloaders
 
@@ -35,7 +36,7 @@ class SubtypedDataLoader():
 
         for subclass in subclass_data:
             subclass_Dataset =  NoduleDataset(*subclass_data[subclass])
-            subclass_iterLoader = iter(DataLoader(subclass_Dataset, batch_size, shuffle=shuffle))
+            subclass_iterLoader = cycle(iter(DataLoader(subclass_Dataset, batch_size, shuffle=shuffle)))
             self.dataloaders.append(subclass_iterLoader)
 
     def __iter__(self):
