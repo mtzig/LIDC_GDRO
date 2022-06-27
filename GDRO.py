@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
+from datasets import SubtypedDataLoader
 
 
 # generic fully-connected neural network class
@@ -23,23 +24,45 @@ class NeuralNetwork(nn.Module):
         return logits
 
 
-def train(dataloader: SubtypedDataLoader, model: nn.Module, loss_fn, optimizer, device):
+def train(dataloader: SubtypedDataLoader, model: nn.Module, loss_fn, optimizer):
     model.train()
+
+    gdro_loss = GDROLoss(model, loss_fn)
 
     for minibatch in enumerate(dataloader):
 
-        loss = GDRO_loss(minibatch)
-
-        # Compute prediction error
-
-        pred = model(X)
-        loss = loss_fn(pred, y)
+        loss = gdro_loss(minibatch)
 
         # Backpropagation
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
+
+class GDROLoss:
+    def __init__(self, model, loss_fn):
+        self.model = model
+        self.loss_fn = loss_fn
+        self.q = torch.tensor([])
+
+    def __call__(self, minibatch):
+        device = "cuda" if minibatch[0][0].is_cuda else "cpu"
+
+        if len(self.q) == 0:
+            self.q = torch.ones(len(minibatch)).to(device)
+
+        losses = torch.zeros(len(minibatch)).to(device)
+
+        for m in range(len(minibatch)):
+            X, y = minibatch[m]
+            losses[m] = nn.CrossEntropyLoss(self.model(X), y)
+            self.q[m] *= (self.hparams["groupdro_eta"] * losses[m].data).exp()
+
+        self.q /= self.q.sum()
+
+        loss = torch.dot(losses, self.q)
+
+        return loss
 
 def test(dataloader: DataLoader, model: nn.Module, loss_fn, device):
     size = len(dataloader.dataset)

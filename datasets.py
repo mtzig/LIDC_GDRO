@@ -42,6 +42,9 @@ class SubtypedDataLoader():
         return self
 
     def __next__(self):
+        # list of batches
+        #ex: 3 subclasses
+         # [(X_subclass_1, y_subclass_1),(X_subclass_2, y_subclass_2),(X_subclass_3, y_subclass_3)]
         minibatch = []
         for iterLoader in self.dataloaders:
             minibatch.append(next(iterLoader))
