@@ -53,3 +53,6 @@ class SubtypedDataLoader:
             minibatch.append(next(iterLoader))
 
         return minibatch
+
+    def __len__(self):
+        return len(self.dataloaders[0])

@@ -1,8 +1,6 @@
 import torch
 from torch import nn
 
-groupdro_hparams = {"groupdro_eta": 0}
-
 
 # generic fully-connected neural network class
 class NeuralNetwork(nn.Module):
@@ -79,8 +77,7 @@ def train(dataloader, model, loss_fn, optimizer):
         optimizer.step()
 
 
-def test(dataloader, model, loss_fn):
-    size = len(dataloader.dataset)
+def test(dataloader, model, loss_fn, is_gdro, batch_size):
     num_batches = len(dataloader)
 
     model.eval()
@@ -88,14 +85,20 @@ def test(dataloader, model, loss_fn):
     test_loss, correct = 0, 0
     with torch.no_grad():
         for minibatch in dataloader:
-
-            X, y = minibatch
+            if is_gdro:
+                X = torch.cat([m[0] for m in minibatch])
+                y = torch.cat([m[1] for m in minibatch])
+            else:
+                X, y = minibatch
 
             pred = model(X)
 
             test_loss += loss_fn(minibatch).item()
+
+            print(X)
+
             correct += (pred.argmax(1) == y).type(torch.float).sum().item()
     test_loss /= num_batches
-    correct /= size
+    # correct /= num_batches * batch_size
 
-    print("Average Loss:", test_loss, "\nAccuracy:", correct)
+    print("Average Loss:", test_loss)#, "\nAccuracy:", correct)
