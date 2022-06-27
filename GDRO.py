@@ -1,10 +1,7 @@
 import torch
 from torch import nn
-from torch.utils.data import DataLoader
-from datasets import SubtypedDataLoader
 
-
-groupdro_hparams = {"groupdro_eta": 0.001}
+groupdro_hparams = {"groupdro_eta": 0}
 
 
 # generic fully-connected neural network class
@@ -27,21 +24,6 @@ class NeuralNetwork(nn.Module):
         return logits
 
 
-def train(dataloader: SubtypedDataLoader, model: nn.Module, loss_fn, optimizer):
-    model.train()
-
-    gdro_loss = GDROLoss(model, loss_fn, groupdro_hparams)
-
-    for minibatch in enumerate(dataloader):
-
-        loss = gdro_loss(minibatch)
-
-        # Backpropagation
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-
 class GDROLoss:
     def __init__(self, model, loss_fn, hparams):
         self.model = model
@@ -59,7 +41,7 @@ class GDROLoss:
 
         for m in range(len(minibatch)):
             X, y = minibatch[m]
-            losses[m] = nn.CrossEntropyLoss(self.model(X), y)
+            losses[m] = self.loss_fn(self.model(X), y)
             self.q[m] *= (self.hparams["groupdro_eta"] * losses[m].data).exp()
 
         self.q /= self.q.sum()
@@ -69,7 +51,35 @@ class GDROLoss:
         return loss
 
 
-def test(dataloader: DataLoader, model: nn.Module, loss_fn, device):
+class ERMLoss:
+    def __init__(self, model, loss_fn, hparams):
+        self.model = model
+        self.loss_fn = loss_fn
+        self.hparams = hparams
+
+    def __call__(self, minibatch):
+
+        X, y = minibatch
+
+        loss = self.loss_fn(self.model(X), y)
+
+        return loss
+
+
+def train(dataloader, model, loss_fn, optimizer):
+    model.train()
+
+    for minibatch in dataloader:
+
+        loss = loss_fn(minibatch)
+
+        # Backpropagation
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+
+def test(dataloader, model, loss_fn):
     size = len(dataloader.dataset)
     num_batches = len(dataloader)
 
@@ -77,12 +87,15 @@ def test(dataloader: DataLoader, model: nn.Module, loss_fn, device):
 
     test_loss, correct = 0, 0
     with torch.no_grad():
-        for X, y in dataloader:
-            X, y = X.to(device), y.to(device)
+        for minibatch in dataloader:
+
+            X, y = minibatch
 
             pred = model(X)
 
-            test_loss += loss_fn(pred, y).item()
+            test_loss += loss_fn(minibatch).item()
             correct += (pred.argmax(1) == y).type(torch.float).sum().item()
     test_loss /= num_batches
     correct /= size
+
+    print("Average Loss:", test_loss, "\nAccuracy:", correct)
