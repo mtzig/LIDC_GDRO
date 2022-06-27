@@ -4,6 +4,9 @@ from torch.utils.data import DataLoader
 from datasets import SubtypedDataLoader
 
 
+groupdro_hparams = {"groupdro_eta": 0.001}
+
+
 # generic fully-connected neural network class
 class NeuralNetwork(nn.Module):
 
@@ -27,7 +30,7 @@ class NeuralNetwork(nn.Module):
 def train(dataloader: SubtypedDataLoader, model: nn.Module, loss_fn, optimizer):
     model.train()
 
-    gdro_loss = GDROLoss(model, loss_fn)
+    gdro_loss = GDROLoss(model, loss_fn, groupdro_hparams)
 
     for minibatch in enumerate(dataloader):
 
@@ -40,10 +43,11 @@ def train(dataloader: SubtypedDataLoader, model: nn.Module, loss_fn, optimizer):
 
 
 class GDROLoss:
-    def __init__(self, model, loss_fn):
+    def __init__(self, model, loss_fn, hparams):
         self.model = model
         self.loss_fn = loss_fn
         self.q = torch.tensor([])
+        self.hparams = hparams
 
     def __call__(self, minibatch):
         device = "cuda" if minibatch[0][0].is_cuda else "cpu"
@@ -63,6 +67,7 @@ class GDROLoss:
         loss = torch.dot(losses, self.q)
 
         return loss
+
 
 def test(dataloader: DataLoader, model: nn.Module, loss_fn, device):
     size = len(dataloader.dataset)
