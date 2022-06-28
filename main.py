@@ -32,7 +32,7 @@ train_csv = "MaxSliceTrainingValidationSetPreprocessed.csv"
 device = "cuda" if torch.cuda.is_available() else "cpu"
 training_fraction = 0.8
 batch_size = 20
-epoch_size = 1663//batch_size
+epoch_size = 1334//batch_size
 
 is_gdro = True
 
@@ -100,11 +100,11 @@ def create_subtyped_dataloader(df, subtype_df):
 
 
 def main():
+    subtype_df = pd.read_csv("lidc_subtyped.csv")
+
     if shuffle_data:
         # import data
         df = pd.read_csv("LIDC_20130817_AllFeatures2D_MaxSlicePerNodule_inLineRatings.csv")
-
-        subtype_df = pd.read_csv("lidc_subtyped.csv")
 
         # preprocess data
         df = preprocess_data(df)
