@@ -1,11 +1,12 @@
-'''
+"""
 Code directly adapted from DomainBeds paper
-'''
+"""
 
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import torch
+
 
 class _InfiniteSampler(torch.utils.data.Sampler):
     """Wraps another Sampler to yield an infinite stream."""
@@ -17,8 +18,9 @@ class _InfiniteSampler(torch.utils.data.Sampler):
             for batch in self.sampler:
                 yield batch
 
+
 class InfiniteDataLoader:
-    def __init__(self, dataset, weights, batch_size, num_workers):
+    def __init__(self, dataset, batch_size, weights=None, num_workers=1):
         super().__init__()
 
         if weights is not None:

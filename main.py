@@ -6,6 +6,7 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
 from datasets import NoduleDataset, SubtypedDataLoader
+from fast_data_loader import InfiniteDataLoader
 
 id_name = 'noduleID'
 feature_names = ['Area', 'ConvexArea', 'Perimeter', 'ConvexPerimeter', 'EquivDiameter',
@@ -28,10 +29,11 @@ label_name = 'malignancy'
 device = "cuda" if torch.cuda.is_available() else "cpu"
 training_fraction = 0.8
 batch_size = 4
+epoch_size = 23
 
-is_gdro = True
+is_gdro = False
 
-groupdro_hparams = {"groupdro_eta": 0}
+groupdro_hparams = {"groupdro_eta": 0.01}
 
 def preprocess_data(df):
     # select features and labels
@@ -67,8 +69,8 @@ def create_dataloaders(df):
     training_data, training_labels, test_data, test_labels = split_to_tensors(df, training_fraction)
 
     # wrap with datasets and dataloaders
-    train_dataloader = DataLoader(NoduleDataset(training_data, training_labels), batch_size=batch_size)
-    test_dataloader = DataLoader(NoduleDataset(test_data, test_labels), batch_size=batch_size)
+    train_dataloader = iter(InfiniteDataLoader(NoduleDataset(training_data, training_labels), batch_size=batch_size))
+    test_dataloader = iter(InfiniteDataLoader(NoduleDataset(test_data, test_labels), batch_size=batch_size))
 
     return train_dataloader, test_dataloader
 
@@ -126,8 +128,8 @@ def main():
 
     for epoch in range(epochs):
         print(f"Epoch {epoch + 1}\n-------------------------------")
-        GDRO.train(train_dataloader, model, loss_fn, optimizer)
-        GDRO.test(test_dataloader, model, loss_fn, is_gdro=is_gdro, batch_size=batch_size)
+        GDRO.train(train_dataloader, epoch_size, model, loss_fn, optimizer)
+        GDRO.test(test_dataloader, epoch_size, model, loss_fn, is_gdro=is_gdro)
     print("Done!")
 
 

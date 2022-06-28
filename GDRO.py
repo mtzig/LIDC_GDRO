@@ -64,12 +64,12 @@ class ERMLoss:
         return loss
 
 
-def train(dataloader, model, loss_fn, optimizer):
+def train(dataloader, epoch_size, model, loss_fn, optimizer):
     model.train()
 
-    for minibatch in dataloader:
+    for i in range(epoch_size):
 
-        loss = loss_fn(minibatch)
+        loss = loss_fn(next(dataloader))
 
         # Backpropagation
         optimizer.zero_grad()
@@ -77,14 +77,15 @@ def train(dataloader, model, loss_fn, optimizer):
         optimizer.step()
 
 
-def test(dataloader, model, loss_fn, is_gdro, batch_size):
-    num_batches = len(dataloader)
+def test(dataloader, epoch_size, model, loss_fn, is_gdro):
+    num_batches = epoch_size
 
     model.eval()
 
     test_loss, correct = 0, 0
     with torch.no_grad():
-        for minibatch in dataloader:
+        for i in range(epoch_size):
+            minibatch = next(dataloader)
             if is_gdro:
                 X = torch.cat([m[0] for m in minibatch])
                 y = torch.cat([m[1] for m in minibatch])
@@ -94,8 +95,6 @@ def test(dataloader, model, loss_fn, is_gdro, batch_size):
             pred = model(X)
 
             test_loss += loss_fn(minibatch).item()
-
-            print(X)
 
             correct += (pred.argmax(1) == y).type(torch.float).sum().item()
     test_loss /= num_batches
