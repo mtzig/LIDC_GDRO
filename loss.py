@@ -19,9 +19,13 @@ class GDROLoss:
         for m in range(len(minibatch)):
             X, y = minibatch[m]
             losses[m] = self.loss_fn(self.model(X), y)
-            self.q[m] *= torch.exp((self.hparams["groupdro_eta"] * losses[m].data))
+            if self.model.training:
+                self.q[m] *= torch.exp((self.hparams["groupdro_eta"] * losses[m].data))
 
-        self.q /= self.q.sum()
+        if self.model.training:
+            self.q /= self.q.sum()
+
+        #print(self.q)
 
         loss = torch.dot(losses, self.q)
 

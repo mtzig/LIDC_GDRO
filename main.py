@@ -27,12 +27,12 @@ feature_names = ['Area', 'ConvexArea', 'Perimeter', 'ConvexPerimeter', 'EquivDia
 label_name = 'malignancy'
 device = "cuda" if torch.cuda.is_available() else "cpu"
 training_fraction = 0.8
-batch_size = 4
-epoch_size = 23
+batch_size = 20
+epoch_size = 1663//batch_size
 
-is_gdro = False
+is_gdro = True
 
-groupdro_hparams = {"groupdro_eta": 0}
+groupdro_hparams = {"groupdro_eta": 0.0}
 
 
 def preprocess_data(df):
@@ -53,7 +53,7 @@ def preprocess_data(df):
 
 def split_to_tensors(df, frac):
     # separate into training and test sets
-    training_df = df.sample(frac=frac)
+    training_df = df.sample(frac=frac, random_state=172)
     test_df = df.drop(training_df.index)
 
     # tensorify
@@ -82,7 +82,7 @@ def create_subtyped_dataloaders(df, subtype_df):
                 if nodule_id in subtype_df["Nodule_id"].values else False
                 for nodule_id in df[id_name]], :]
 
-    subtype_names = subtype_df["subtype"].unique()
+    subtype_names = ["0benign", "1benign", "0malignant", "1malignant"]
     subtype_dfs = {name: get_subtype_data(name) for name in subtype_names}
 
     # separate into training and test sets
@@ -113,7 +113,8 @@ def main():
     if is_gdro:
         train_dataloader, test_dataloader = create_subtyped_dataloaders(df, subtype_df)
     else:
-        train_dataloader, test_dataloader = create_dataloaders(df)
+        # bad
+        train_dataloader, test_dataloader = create_dataloaders(df)[0], create_subtyped_dataloaders(df, subtype_df)[1]
 
     # create and train model
     model = models.NeuralNetwork(64, 32, 32, 2)
@@ -124,7 +125,7 @@ def main():
         loss_fn = loss.ERMLoss(model, torch.nn.CrossEntropyLoss(), {})
     optimizer = torch.optim.SGD(model.parameters(), lr=0.001)
 
-    epochs = 100
+    epochs = 20
 
     for epoch in range(epochs):
         print(f"Epoch {epoch + 1}\n-------------------------------")
