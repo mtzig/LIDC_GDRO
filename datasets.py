@@ -1,17 +1,5 @@
 import torch
 from torch.utils.data import Dataset
-
-# functions to create our datasets and dataloaders
-
-
-# SubtypedDataLoader class
-
-# inputs:
-# subclass_class_data: {subclass_1: (image_list, label_list), subclass_2: (image_list, label_list), ...}
-# batch_size
-# iterable
-# gives a list of size n_subclasses
-# each element is a batch of tensor from specific subclass
 from fast_data_loader import InfiniteDataLoader
 
 
@@ -48,13 +36,14 @@ class SubtypedDataLoader:
         '''
         dataloaders = []
 
-        # TO DO: change subtype_data to a list since a dictionary is unecessary
         for idx, (features, labels) in subtype_data:
+            
             subtype_dataset = NoduleDataset(features, labels)
-
             subclass_batch_size = batch_size if type(batch_size) == int else batch_size[idx]
+            
             subtype_iter_loader = InfiniteDataLoader(subtype_dataset, subclass_batch_size)
             dataloaders.append(subtype_iter_loader)
+            
         self.minibatch_iterator = zip(*dataloaders)
 
     def __iter__(self):

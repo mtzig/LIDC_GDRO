@@ -17,15 +17,20 @@ class GDROLoss:
         losses = torch.zeros(len(minibatch)).to(device)
 
         if self.normalize_loss:
-                
+            subgroup_batch_sizes = list(map(lambda x:x[0].shape[0], minibatch))
+            total_samples = sum(subgroup_batch_sizes)
 
         for m in range(len(minibatch)):
             X, y = minibatch[m] 
             losses[m] = self.loss_fn(self.model(X), y)
-            if self.model.training:
-                self.q[m] *= torch.exp((self.hparams["groupdro_eta"] * losses[m].data))
+
+            if self.normalize_loss:
+                loss[m] *= subgroup_batch_sizes[m] / total_samples
+            # if self.model.training:
+            #     self.q[m] *= torch.exp((self.hparams["groupdro_eta"] * losses[m].data))
 
         if self.model.training:
+            self.q *= torch.exp(self.hparams["groupdro_eta"] * losses[m]) #vectorized (might not work)
             self.q /= self.q.sum()
 
         #print(self.q)
