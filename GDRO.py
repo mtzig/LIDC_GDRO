@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+import math
 
 
 # generic fully-connected neural network class
@@ -40,7 +41,7 @@ class GDROLoss:
         for m in range(len(minibatch)):
             X, y = minibatch[m]
             losses[m] = self.loss_fn(self.model(X), y)
-            self.q[m] *= (self.hparams["groupdro_eta"] * losses[m].data).exp()
+            self.q[m] *= math.exp((self.hparams["groupdro_eta"] * losses[m].data))
 
         self.q /= self.q.sum()
 
@@ -98,6 +99,6 @@ def test(dataloader, epoch_size, batch_size, model, loss_fn, is_gdro):
 
             correct += (pred.argmax(1) == y).type(torch.float).sum().item()
     test_loss /= num_batches
-    correct /= num_batches * batch_size
+    correct /= num_batches * batch_size * (3 * is_gdro + 1)
 
     print("Average Loss:", test_loss, "\nAccuracy:", correct)
