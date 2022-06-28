@@ -1,10 +1,9 @@
-from torch.utils.data import DataLoader
-
-import GDRO
+import loss
 import torch
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
-
+import models
+import train
 from datasets import NoduleDataset, SubtypedDataLoader
 from fast_data_loader import InfiniteDataLoader
 
@@ -34,6 +33,7 @@ epoch_size = 23
 is_gdro = False
 
 groupdro_hparams = {"groupdro_eta": 0}
+
 
 def preprocess_data(df):
     # select features and labels
@@ -116,20 +116,20 @@ def main():
         train_dataloader, test_dataloader = create_dataloaders(df)
 
     # create and train model
-    model = GDRO.NeuralNetwork(64, 32, 32, 2)
+    model = models.NeuralNetwork(64, 32, 32, 2)
 
     if is_gdro:
-        loss_fn = GDRO.GDROLoss(model, torch.nn.CrossEntropyLoss(), groupdro_hparams)
+        loss_fn = loss.GDROLoss(model, torch.nn.CrossEntropyLoss(), groupdro_hparams)
     else:
-        loss_fn = GDRO.ERMLoss(model, torch.nn.CrossEntropyLoss(), {})
+        loss_fn = loss.ERMLoss(model, torch.nn.CrossEntropyLoss(), {})
     optimizer = torch.optim.SGD(model.parameters(), lr=0.001)
 
     epochs = 100
 
     for epoch in range(epochs):
         print(f"Epoch {epoch + 1}\n-------------------------------")
-        GDRO.train(train_dataloader, epoch_size, model, loss_fn, optimizer)
-        GDRO.test(test_dataloader, epoch_size, batch_size, model, loss_fn, is_gdro)
+        train.train(train_dataloader, epoch_size, model, loss_fn, optimizer)
+        train.test(test_dataloader, epoch_size, batch_size, model, loss_fn, is_gdro)
     print("Done!")
 
 
