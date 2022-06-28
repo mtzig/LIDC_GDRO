@@ -2,10 +2,9 @@ import numpy as np
 import torch
 
 
-def train(dataloader, epoch_size, model, loss_fn, optimizer):
+def train(dataloader, steps_per_epoch, model, loss_fn, optimizer):
     model.train()
-
-    for i in range(epoch_size):
+    for i in range(steps_per_epoch):
 
         loss = loss_fn(next(dataloader))
 
@@ -15,14 +14,14 @@ def train(dataloader, epoch_size, model, loss_fn, optimizer):
         optimizer.step()
 
 
-def test(dataloader, epoch_size, batch_size, model, loss_fn, is_gdro):
-    num_batches = epoch_size
+def test(dataloader, steps_per_epoch, batch_size, model, loss_fn, is_gdro):
+    num_batches = steps_per_epoch
 
     model.eval()
 
     test_loss, correct = 0, []
     with torch.no_grad():
-        for i in range(epoch_size):
+        for i in range(steps_per_epoch):
             minibatch = next(dataloader)
 
             if len(correct) == 0:

@@ -1,6 +1,5 @@
 import torch
 
-
 class GDROLoss:
     def __init__(self, model, loss_fn, hparams):
         self.model = model

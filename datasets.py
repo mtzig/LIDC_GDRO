@@ -17,26 +17,29 @@ from fast_data_loader import InfiniteDataLoader
 
 class NoduleDataset(Dataset):
 
-    def __init__(self, feature_array, label):
-        self.feature_array = feature_array
-        self.label = label
+    def __init__(self, features, labels):
+        self.features = features
+        self.labels = labels
 
     def __len__(self):
-        return len(self.feature_array)
+        return len(self.features)
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
-
-        return self.feature_array[idx], self.label[idx]
+        
+        # TO DO: modify to allow just one label (for the subtypes)
+        return self.features[idx], self.labels[idx]
 
 
 # wraps dataloader class to provide data separated by subgroup
 class SubtypedDataLoader:
 
     def __init__(self, subtype_data, batch_size):
-        # self.minibatch_iterator =
+
         dataloaders = []
+
+        # TO DO: change subtype_data to a list since a dictionary is unecessary
         for subtype in subtype_data:
             subtype_dataset = NoduleDataset(*subtype_data[subtype])
             subtype_iter_loader = InfiniteDataLoader(subtype_dataset, batch_size)
