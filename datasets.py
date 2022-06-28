@@ -31,7 +31,7 @@ class NoduleDataset(Dataset):
             idx = idx.tolist()
         
         # TO DO: modify to allow just one label (for the subtypes)
-        return self.feature_array[idx], self.label[idx]
+        return self.features[idx], self.labels[idx]
 
 
 # wraps dataloader class to provide data separated by subgroup
