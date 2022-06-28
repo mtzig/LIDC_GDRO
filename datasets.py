@@ -5,9 +5,21 @@ from fast_data_loader import InfiniteDataLoader
 
 class NoduleDataset(Dataset):
 
-    def __init__(self, features, labels):
+    def __init__(self, features, labels, singular=False):
+        '''
+        INPUTS:
+        features: list of features (as Pytorch tensors)
+        labels:   list of corresponding lables (if singular is false),
+                  otherwise, a tensor of size 1 with just the class label
+        singular: False if labels is list of lables corresponding to features,
+                  True if all features have only one label
+        
+        '''
+
+
         self.features = features
         self.labels = labels
+        self.singular = singular
 
     def __len__(self):
         return len(self.features)
@@ -16,16 +28,20 @@ class NoduleDataset(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
         
-        # TO DO: modify to allow just one label (for the subtypes)
-        return self.features[idx], self.labels[idx]
+        label = self.labels[0] if self.singular else self.labels[idx]
+        return self.features[idx], label
 
-
-# wraps dataloader class to provide data separated by subgroup
 class SubtypedDataLoader:
+    '''
+    A modified DataLoader, that divides a batch by subgroups so
+    that we can calculate losses seperately for each subgroup
+
+    '''
+
 
     def __init__(self, subtype_data, batch_size):
         '''
-        INPUT:
+        INPUTS:
         subtyped_data: list of data for each subclass, e.g. 
                        [(features_subclass_0, labels_subclass_0), 
                         (features_subclass_1, labels_subclass_1), 
@@ -51,7 +67,6 @@ class SubtypedDataLoader:
 
     def __next__(self):
         '''
-        
         OUTPUT: a list of length number of subclasses where each element is a tuple
                 of a batch of features and labels, e.g.
                 [(X_subclass_0, y_subclass_0), 
