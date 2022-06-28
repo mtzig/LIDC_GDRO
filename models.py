@@ -1,3 +1,6 @@
+from torch import nn
+
+
 # generic fully-connected neural network class
 class NeuralNetwork(nn.Module):
 

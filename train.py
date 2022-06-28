@@ -1,3 +1,6 @@
+import torch
+
+
 def train(dataloader, epoch_size, model, loss_fn, optimizer):
     model.train()
 

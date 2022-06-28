@@ -1,7 +1,4 @@
 import torch
-from torch import nn
-
-
 
 
 class GDROLoss:
@@ -44,5 +41,3 @@ class ERMLoss:
         loss = self.loss_fn(self.model(X), y)
 
         return loss
-
-
