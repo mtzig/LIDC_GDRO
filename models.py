@@ -13,7 +13,7 @@ class NeuralNetwork(nn.Module):
         for i in range(len(layers) - 1):
             stack.extend([nn.Linear(layers[i], layers[i + 1]), nn.ReLU()])
 
-        self.linear_relu_stack = nn.Sequential(*stack)
+        self.linear_relu_stack = nn.Sequential(*stack[:-1])
 
     def forward(self, x):
         x = self.flatten(x)

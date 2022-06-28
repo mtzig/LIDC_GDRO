@@ -25,14 +25,22 @@ feature_names = ['Area', 'ConvexArea', 'Perimeter', 'ConvexPerimeter', 'EquivDia
                  'Entropy', 'x_3rdordermoment', 'Inversevariance', 'Sumaverage',
                  'Variance', 'Clustertendency']
 label_name = 'malignancy'
+all_data_csv = "LIDC_20130817_AllFeatures2D_MaxSlicePerNodule_inLineRatings.csv"
+test_csv = "MaxSliceTestSetPreprocessed.csv"
+train_csv = "MaxSliceTrainingValidationSetPreprocessed.csv"
+
 device = "cuda" if torch.cuda.is_available() else "cpu"
 training_fraction = 0.8
-batch_size = 4
-epoch_size = 23
+batch_size = 20
+epoch_size = 1334//batch_size
 
-is_gdro = False
+is_gdro = True
 
-groupdro_hparams = {"groupdro_eta": 0}
+groupdro_hparams = {"groupdro_eta": 0.0}
+
+# if true, will randomly split test and training/validation data and save to csv
+# changing the feature names will require reshuffling the data to update the csvs
+shuffle_data = False
 
 
 def preprocess_data(df):
@@ -51,69 +59,73 @@ def preprocess_data(df):
     return df
 
 
-def split_to_tensors(df, frac):
-    # separate into training and test sets
-    training_df = df.sample(frac=frac)
-    test_df = df.drop(training_df.index)
-
+def split_to_tensors(df):
     # tensorify
-    training_data = torch.FloatTensor(training_df.loc[:, feature_names].values).to(device)
-    training_labels = torch.LongTensor(training_df.loc[:, label_name].values).to(device)
-    test_data = torch.FloatTensor(test_df.loc[:, feature_names].values).to(device)
-    test_labels = torch.LongTensor(test_df.loc[:, label_name].values).to(device)
+    data = torch.FloatTensor(df.loc[:, feature_names].values).to(device)
+    labels = torch.LongTensor(df.loc[:, label_name].values).to(device)
 
-    return training_data, training_labels, test_data, test_labels
+    return data, labels
 
 
-def create_dataloaders(df):
-    training_data, training_labels, test_data, test_labels = split_to_tensors(df, training_fraction)
+def create_dataloader(df):
+    data, labels = split_to_tensors(df)
 
-    # wrap with datasets and dataloaders
-    train_dataloader = iter(InfiniteDataLoader(NoduleDataset(training_data, training_labels), batch_size=batch_size))
-    test_dataloader = iter(InfiniteDataLoader(NoduleDataset(test_data, test_labels), batch_size=batch_size))
+    # wrap with dataset and dataloader
+    dataloader = iter(InfiniteDataLoader(NoduleDataset(data, labels), batch_size=batch_size))
 
-    return train_dataloader, test_dataloader
+    return dataloader
 
 
-def create_subtyped_dataloaders(df, subtype_df):
+def create_subtyped_dataloader(df, subtype_df):
     def get_subtype_data(subtype_name):
         return df.loc[
                [subtype_df.at[nodule_id, "subtype"] == subtype_name
                 if nodule_id in subtype_df["Nodule_id"].values else False
                 for nodule_id in df[id_name]], :]
 
-    subtype_names = subtype_df["subtype"].unique()
+    subtype_names = ["0benign", "1benign", "0malignant", "1malignant"]
     subtype_dfs = {name: get_subtype_data(name) for name in subtype_names}
 
     # separate into training and test sets
-    training_subtype_data = test_subtype_data = {}
+    subtype_data = {}
     for name in subtype_dfs:
-        training_data, training_labels, test_data, test_labels = split_to_tensors(subtype_dfs[name], training_fraction)
+        data, labels = split_to_tensors(subtype_dfs[name])
 
-        training_subtype_data[name] = (training_data, training_labels)
-        test_subtype_data[name] = (test_data, test_labels)
+        subtype_data[name] = (data, labels)
 
-    # wrap with datasets and dataloaders
-    train_dataloader = SubtypedDataLoader(training_subtype_data, batch_size=batch_size)
-    test_dataloader = SubtypedDataLoader(test_subtype_data, batch_size=batch_size)
+    # wrap with dataset and dataloader
+    dataloader = SubtypedDataLoader(subtype_data, batch_size=batch_size)
 
-    return train_dataloader, test_dataloader
+    return dataloader
 
 
 def main():
-    # import data
-    df = pd.read_csv("LIDC_20130817_AllFeatures2D_MaxSlicePerNodule_inLineRatings.csv")
     subtype_df = pd.read_csv("lidc_subtyped.csv")
 
-    # preprocess data
-    df = preprocess_data(df)
+    if shuffle_data:
+        # import data
+        df = pd.read_csv("LIDC_20130817_AllFeatures2D_MaxSlicePerNodule_inLineRatings.csv")
+
+        # preprocess data
+        df = preprocess_data(df)
+
+        training_df = df.sample(frac=training_fraction)
+        test_df = df.drop(training_df.index)
+        training_df.to_csv("MaxSliceTrainingValidationSetPreprocessed.csv")
+        test_df.to_csv("MaxSliceTestSetPreprocessed.csv")
+    else:
+        training_df = pd.read_csv("MaxSliceTrainingValidationSetPreprocessed.csv")
+        test_df = pd.read_csv("MaxSliceTestSetPreprocessed.csv")
+
     subtype_df.index = subtype_df["Nodule_id"].values
 
     # create the training and testing dataloaders
     if is_gdro:
-        train_dataloader, test_dataloader = create_subtyped_dataloaders(df, subtype_df)
+        train_dataloader = create_subtyped_dataloader(training_df, subtype_df)
     else:
-        train_dataloader, test_dataloader = create_dataloaders(df)
+        train_dataloader = create_dataloader(training_df)
+
+    test_dataloader = create_subtyped_dataloader(test_df, subtype_df)
 
     # create and train model
     model = models.NeuralNetwork(64, 32, 32, 2)
@@ -124,7 +136,7 @@ def main():
         loss_fn = loss.ERMLoss(model, torch.nn.CrossEntropyLoss(), {})
     optimizer = torch.optim.SGD(model.parameters(), lr=0.001)
 
-    epochs = 100
+    epochs = 20
 
     for epoch in range(epochs):
         print(f"Epoch {epoch + 1}\n-------------------------------")

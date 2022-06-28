@@ -1,7 +1,5 @@
 import torch
-from torch.utils.data import DataLoader, Dataset
-from itertools import cycle
-
+from torch.utils.data import Dataset
 
 # functions to create our datasets and dataloaders
 
