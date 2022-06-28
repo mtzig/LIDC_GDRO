@@ -33,7 +33,7 @@ epoch_size = 23
 
 is_gdro = False
 
-groupdro_hparams = {"groupdro_eta": 0.01}
+groupdro_hparams = {"groupdro_eta": 0}
 
 def preprocess_data(df):
     # select features and labels
@@ -124,12 +124,12 @@ def main():
         loss_fn = GDRO.ERMLoss(model, torch.nn.CrossEntropyLoss(), {})
     optimizer = torch.optim.SGD(model.parameters(), lr=0.001)
 
-    epochs = 20
+    epochs = 100
 
     for epoch in range(epochs):
         print(f"Epoch {epoch + 1}\n-------------------------------")
         GDRO.train(train_dataloader, epoch_size, model, loss_fn, optimizer)
-        GDRO.test(test_dataloader, epoch_size, model, loss_fn, is_gdro=is_gdro)
+        GDRO.test(test_dataloader, epoch_size, batch_size, model, loss_fn, is_gdro)
     print("Done!")
 
 
