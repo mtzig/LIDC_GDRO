@@ -77,7 +77,7 @@ def train(dataloader, epoch_size, model, loss_fn, optimizer):
         optimizer.step()
 
 
-def test(dataloader, epoch_size, model, loss_fn, is_gdro):
+def test(dataloader, epoch_size, batch_size, model, loss_fn, is_gdro):
     num_batches = epoch_size
 
     model.eval()
@@ -98,6 +98,6 @@ def test(dataloader, epoch_size, model, loss_fn, is_gdro):
 
             correct += (pred.argmax(1) == y).type(torch.float).sum().item()
     test_loss /= num_batches
-    # correct /= num_batches * batch_size
+    correct /= num_batches * batch_size
 
-    print("Average Loss:", test_loss)#, "\nAccuracy:", correct)
+    print("Average Loss:", test_loss, "\nAccuracy:", correct)
