@@ -38,13 +38,24 @@ class NoduleDataset(Dataset):
 class SubtypedDataLoader:
 
     def __init__(self, subtype_data, batch_size):
+        '''
+        INPUT:
+        subtyped_data: list of data for each subclass, e.g. 
+                       [(features_subclass_0, labels_subclass_0), 
+                        (features_subclass_1, labels_subclass_1), 
+                        ...]
 
+        batch_size  : either a number indicating uniform batch size for each subclass,
+                       or a tensor of length number of subclasses with batchsize for each subclass
+        '''
         dataloaders = []
 
         # TO DO: change subtype_data to a list since a dictionary is unecessary
-        for subtype in subtype_data:
-            subtype_dataset = NoduleDataset(*subtype_data[subtype])
-            subtype_iter_loader = InfiniteDataLoader(subtype_dataset, batch_size)
+        for idx, (features, labels) in subtype_data:
+            subtype_dataset = NoduleDataset(features, labels)
+
+            subclass_batch_size = batch_size if type(batch_size) == int else batch_size[idx]
+            subtype_iter_loader = InfiniteDataLoader(subtype_dataset, subclass_batch_size)
             dataloaders.append(subtype_iter_loader)
         self.minibatch_iterator = zip(*dataloaders)
 
@@ -52,12 +63,13 @@ class SubtypedDataLoader:
         return self
 
     def __next__(self):
-        # list of batches
-        # ex: 3 subclasses
-        # [(X_subclass_1, y_subclass_1),(X_subclass_2, y_subclass_2),(X_subclass_3, y_subclass_3)]
-        # minibatch = []
-        # for iterLoader in self.dataloaders:
-        #     minibatch.append(next(iterLoader))
-        #
-        # return minibatch
+        '''
+        
+        OUTPUT: a list of length number of subclasses where each element is a tuple
+                of a batch of features and labels, e.g.
+                [(X_subclass_0, y_subclass_0), 
+                 (X_subclass_1, y_subclass_1), 
+                 (X_subclass_2, y_subclass_2),
+                 ...]
+        '''
         return next(self.minibatch_iterator)
