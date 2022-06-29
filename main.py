@@ -36,7 +36,7 @@ epoch_size = 1334//batch_size
 
 is_gdro = True
 
-groupdro_hparams = {"groupdro_eta": 0.000}
+groupdro_hparams = {"groupdro_eta": 0.001}
 
 # if true, will randomly split test and training/validation data and save to csv
 # changing the feature names will require reshuffling the data to update the csvs
@@ -93,7 +93,7 @@ def create_subtyped_dataloader(df, subtype_df):
         subtype_data.append((data, labels))
 
     # wrap with dataset and dataloader
-    dataloader = SubtypedDataLoader(subtype_data, batch_size=batch_size)
+    dataloader = SubtypedDataLoader(subtype_data, batch_size=[4, 4, 4, 4])
 
     return dataloader
 
@@ -140,7 +140,7 @@ def main():
     for epoch in range(epochs):
         print(f"Epoch {epoch + 1}\n-------------------------------")
         train.train(train_dataloader, epoch_size, model, loss_fn, optimizer)
-        train.test(test_dataloader, epoch_size, batch_size, model, loss_fn, is_gdro)
+        train.test(test_dataloader, epoch_size, model, loss_fn, is_gdro)
     print("Done!")
 
 

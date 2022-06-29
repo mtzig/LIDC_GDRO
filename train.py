@@ -14,31 +14,38 @@ def train(dataloader, steps_per_epoch, model, loss_fn, optimizer):
         optimizer.step()
 
 
-def test(dataloader, steps_per_epoch, batch_size, model, loss_fn, is_gdro):
-    num_batches = steps_per_epoch
-
+def test(dataloader, steps_per_epoch, model, loss_fn, is_gdro):
     model.eval()
 
     test_loss = 0
-    correct = []
+    num_samples = []
+    subgroup_correct = []
     with torch.no_grad():
         for i in range(steps_per_epoch):
             minibatch = next(dataloader)
 
-            if len(correct) == 0:
-                correct = np.zeros(len(minibatch))
+            if len(subgroup_correct) == 0:
+                subgroup_correct = np.zeros(len(minibatch))
+                num_samples = np.zeros(len(minibatch))
 
             if is_gdro:
                 test_loss += loss_fn(minibatch).item()
 
             for m in range(len(minibatch)):
                 X, y = minibatch[m]
+                batch_size = X.shape[0]
                 pred = model(X)
-                correct[m] += (pred.argmax(1) == y).type(torch.float).sum().item()
+                subgroup_correct[m] += (pred.argmax(1) == y).type(torch.float).sum().item()
+                num_samples[m] += batch_size
                 if not is_gdro:
                     test_loss += loss_fn(minibatch[m]).item()
 
-    test_loss /= num_batches
-    correct /= num_batches * batch_size
+    print(subgroup_correct)
+    print(num_samples)
 
-    print("Average Loss:", test_loss, "\nAccuracy:", sum(correct)/len(correct), "\nAccuracy over subgroups:", correct, "\nWorst Group Accuracy:", min(correct))
+    test_loss /= steps_per_epoch
+    subgroup_accuracy = subgroup_correct / num_samples
+
+    accuracy = sum(subgroup_correct)/sum(num_samples)
+
+    print("Average Loss:", test_loss, "\nAccuracy:", accuracy, "\nAccuracy over subgroups:", subgroup_accuracy, "\nWorst Group Accuracy:", min(subgroup_accuracy))
