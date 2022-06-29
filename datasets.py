@@ -39,16 +39,19 @@ class SubtypedDataLoader:
     '''
 
 
-    def __init__(self, subtype_data, batch_size):
+    def __init__(self, subtype_data, batch_size, total = False):
         '''
         INPUTS:
-        subtyped_data: list of data for each subclass, e.g. 
+        subtype_data: list of data for each subclass, e.g. 
                        [(features_subclass_0, labels_subclass_0), 
                         (features_subclass_1, labels_subclass_1), 
                         ...]
 
         batch_size  : either a number indicating uniform batch size for each subclass,
-                       or a tensor of length number of subclasses with batchsize for each subclass
+                       or a batch size for entire minibatch
+        
+        total       : False if batch_size is for each subclass,
+                      True if batch_size is for entire minibatch     
         '''
         dataloaders = []
 
