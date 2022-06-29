@@ -55,7 +55,7 @@ class SubtypedDataLoader:
         '''
         dataloaders = []
 
-        for idx, (features, labels) in subtype_data:
+        for idx, (features, labels) in enumerate(subtype_data):
             
             subtype_dataset = NoduleDataset(features, labels)
             subclass_batch_size = batch_size if type(batch_size) == int else batch_size[idx]

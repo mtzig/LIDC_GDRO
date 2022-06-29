@@ -19,7 +19,8 @@ def test(dataloader, steps_per_epoch, batch_size, model, loss_fn, is_gdro):
 
     model.eval()
 
-    test_loss, correct = 0, []
+    test_loss = 0
+    correct = []
     with torch.no_grad():
         for i in range(steps_per_epoch):
             minibatch = next(dataloader)
