@@ -33,12 +33,12 @@ train_csv = "MaxSliceTrainingValidationSetPreprocessed.csv"
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 training_fraction = 0.8
-batch_size = 40
-proportional = True
+batch_size = 10
+proportional = False
 
 is_gdro = True
 
-groupdro_hparams = {"groupdro_eta": 0.01}
+groupdro_hparams = {"groupdro_eta": 0.1}
 
 # if true, will randomly split test and training/validation data and save to csv
 # changing the feature names will require reshuffling the data to update the csvs
@@ -120,30 +120,39 @@ def main():
 
     subtype_df.index = subtype_df["Nodule_id"].values
 
-    # create the training and testing dataloaders
-    if is_gdro:
-        train_dataloader = create_subtyped_dataloader(training_df, subtype_df)
-    else:
-        train_dataloader = create_dataloader(training_df)
+    results = pd.DataFrame(columns=["ERM", "GDRO"], index=range(30))
+    for is_gdro in [1]:
 
-    test_dataloader = create_subtyped_dataloader(test_df, subtype_df)
+        # create the training and testing dataloaders
+        if is_gdro:
+            train_dataloader = create_subtyped_dataloader(training_df, subtype_df)
+        else:
+            train_dataloader = create_dataloader(training_df)
 
-    # create and train model
-    model = models.NeuralNetwork(64, 32, 32, 2)
+        test_dataloader = create_subtyped_dataloader(test_df, subtype_df)
 
-    if is_gdro:
-        loss_fn = loss.GDROLoss(model, torch.nn.CrossEntropyLoss(), groupdro_hparams)
-    else:
-        loss_fn = loss.ERMLoss(model, torch.nn.CrossEntropyLoss(), {})
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=0.0005)
+        for i in range(1):
+            # create and train model
+            model = models.NeuralNetwork(64, 32, 32, 2)
 
-    epochs = 100
+            if is_gdro:
+                loss_fn = loss.GDROLoss(model, torch.nn.CrossEntropyLoss(), groupdro_hparams)
+            else:
+                loss_fn = loss.ERMLoss(model, torch.nn.CrossEntropyLoss(), {})
+            optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=0.005)
 
-    for epoch in range(epochs):
-        print(f"Epoch {epoch + 1}\n-------------------------------")
-        train.train(train_dataloader, model, loss_fn, optimizer)
-        train.test(test_dataloader, model)
-    print("Done!")
+            epochs = 40
+
+            for epoch in range(epochs):
+                print(f"Epoch {epoch + 1}\n-------------------------------")
+                train.train(train_dataloader, model, loss_fn, optimizer)
+                #train.test(test_dataloader, model)
+
+            results.iloc[i, is_gdro] = train.test(test_dataloader, model)
+            print("Done!")
+
+    results.to_csv("results")
+
 
 
 if __name__ == "__main__":

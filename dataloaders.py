@@ -99,8 +99,6 @@ class SubtypedDataLoader:
             actual_batch_size = sum(subtype_batch_sizes)
             self._batches_per_epoch = total_data_size // actual_batch_size
 
-            print(subtype_batch_sizes)
-
         else:
 
             # we define epoch as the batches to go through smallest subclass

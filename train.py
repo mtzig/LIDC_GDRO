@@ -50,3 +50,5 @@ def test(dataloader, model):
     accuracy = sum(subgroup_correct)/sum(num_samples)
 
     print("Accuracy:", accuracy, "\nAccuracy over subgroups:", subgroup_accuracy, "\nWorst Group Accuracy:", min(subgroup_accuracy))
+
+    return accuracy, subgroup_accuracy
