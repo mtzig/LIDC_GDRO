@@ -1,3 +1,5 @@
+from torch.utils.data import DataLoader
+
 import loss
 import torch
 import pandas as pd
@@ -31,12 +33,11 @@ train_csv = "MaxSliceTrainingValidationSetPreprocessed.csv"
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 training_fraction = 0.8
-batch_size = 20
-epoch_size = 1334//batch_size
+batch_size = 1
 
-is_gdro = True
+is_gdro = False
 
-groupdro_hparams = {"groupdro_eta": 0.001}
+groupdro_hparams = {"groupdro_eta": 0.0001}
 
 # if true, will randomly split test and training/validation data and save to csv
 # changing the feature names will require reshuffling the data to update the csvs
@@ -71,7 +72,7 @@ def create_dataloader(df):
     data, labels = split_to_tensors(df)
 
     # wrap with dataset and dataloader
-    dataloader = iter(InfiniteDataLoader(NoduleDataset(data, labels), batch_size=batch_size))
+    dataloader = InfiniteDataLoader(NoduleDataset(data, labels), batch_size=batch_size)
 
     return dataloader
 
@@ -93,7 +94,7 @@ def create_subtyped_dataloader(df, subtype_df):
         subtype_data.append((data, labels))
 
     # wrap with dataset and dataloader
-    dataloader = SubtypedDataLoader(subtype_data, batch_size=batch_size, total=True)
+    dataloader = SubtypedDataLoader(subtype_data, batch_size, total=False)
 
     return dataloader
 
@@ -133,14 +134,14 @@ def main():
         loss_fn = loss.GDROLoss(model, torch.nn.CrossEntropyLoss(), groupdro_hparams)
     else:
         loss_fn = loss.ERMLoss(model, torch.nn.CrossEntropyLoss(), {})
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.001)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=0.0005)
 
-    epochs = 20
+    epochs = 100
 
     for epoch in range(epochs):
         print(f"Epoch {epoch + 1}\n-------------------------------")
-        train.train(train_dataloader, epoch_size, model, loss_fn, optimizer)
-        train.test(test_dataloader, epoch_size, model, loss_fn, is_gdro)
+        train.train(train_dataloader, model, loss_fn, optimizer)
+        train.test(test_dataloader, model, loss_fn, is_gdro)
     print("Done!")
 
 

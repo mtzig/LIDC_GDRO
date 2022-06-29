@@ -2,14 +2,10 @@ import numpy as np
 import torch
 
 
-def train(dataloader, steps_per_epoch, model, loss_fn, optimizer):
+def train(dataloader, model, loss_fn, optimizer):
     model.train()
 
-    print(steps_per_epoch)
-
-    steps_per_epoch = dataloader.dataset_len() /
-
-    print(steps_per_epoch)
+    steps_per_epoch = dataloader.batches_per_epoch()
 
     for i in range(steps_per_epoch):
 
@@ -21,8 +17,10 @@ def train(dataloader, steps_per_epoch, model, loss_fn, optimizer):
         optimizer.step()
 
 
-def test(dataloader, steps_per_epoch, model, loss_fn, is_gdro):
+def test(dataloader, model, loss_fn, is_gdro):
     model.eval()
+
+    steps_per_epoch = dataloader.batches_per_epoch()
 
     test_loss = 0
     num_samples = []

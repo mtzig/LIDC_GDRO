@@ -66,11 +66,14 @@ class SubtypedDataLoader:
             subtype_batch_sizes = list(map(lambda x:max(1,int(batch_size * x/total_data_size)), subtype_data_sizes))
             
             actual_batch_size = sum(subtype_batch_sizes)
-            self.batches_per_epoch = total_data_size // actual_batch_size
+            self._batches_per_epoch = total_data_size // actual_batch_size
+
         else:
 
             #we define epoch as the batches to go through smallest subclass
-            self.batches_per_epoch = min(*subtype_data_sizes) // batch_size
+            self._batches_per_epoch = min(*subtype_data_sizes) // batch_size
+
+        self.dataloaders = []
 
         for idx, (features, labels) in enumerate(subtype_data):
             
@@ -97,4 +100,4 @@ class SubtypedDataLoader:
         return next(self.minibatch_iterator)
 
     def batches_per_epoch(self):
-        return self.batches_per_epoch
+        return self._batches_per_epoch
