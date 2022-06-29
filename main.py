@@ -33,7 +33,7 @@ train_csv = "MaxSliceTrainingValidationSetPreprocessed.csv"
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 training_fraction = 0.8
-batch_size = 1
+batch_size = 40
 
 is_gdro = False
 
@@ -134,7 +134,7 @@ def main():
         loss_fn = loss.GDROLoss(model, torch.nn.CrossEntropyLoss(), groupdro_hparams)
     else:
         loss_fn = loss.ERMLoss(model, torch.nn.CrossEntropyLoss(), {})
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=0.0005)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=0.0005)
 
     epochs = 100
 
