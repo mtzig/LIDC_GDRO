@@ -45,12 +45,17 @@ class InfiniteDataLoader:
             batch_sampler=_InfiniteSampler(batch_sampler)
         ))
 
+        self.dataset = dataset
+
     def __iter__(self):
         while True:
             yield next(self._infinite_iterator)
 
     def __len__(self):
         raise ValueError
+
+    def dataset_len(self):
+        return len(self.dataset)
 
 class FastDataLoader:
     """DataLoader wrapper with slightly improved speed by not respawning worker

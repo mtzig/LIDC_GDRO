@@ -53,13 +53,12 @@ class SubtypedDataLoader:
         total       : False if batch_size is for each subclass,
                       True if batch_size is for entire minibatch     
         '''
-        dataloaders = []
+        self.dataloaders = []
 
         if total:
             subtype_data_sizes = list(map(lambda x:len(x[0]), subtype_data))
             total_data_size = sum(subtype_data_sizes)
             subtype_batch_sizes = list(map(lambda x:max(1,int(batch_size * x/total_data_size)), subtype_data_sizes))
-
 
         for idx, (features, labels) in enumerate(subtype_data):
             
@@ -67,9 +66,9 @@ class SubtypedDataLoader:
             subclass_batch_size = batch_size if not total else subtype_batch_sizes[idx]
             
             subtype_iter_loader = InfiniteDataLoader(subtype_dataset, subclass_batch_size)
-            dataloaders.append(subtype_iter_loader)
+            self.dataloaders.append(subtype_iter_loader)
             
-        self.minibatch_iterator = zip(*dataloaders)
+        self.minibatch_iterator = zip(*self.dataloaders)
 
     def __iter__(self):
         return self
@@ -84,3 +83,10 @@ class SubtypedDataLoader:
                  ...]
         '''
         return next(self.minibatch_iterator)
+
+    def dataset_len(self):
+        return sum([dataloader.dataset_len() for dataloader in self.dataloaders])
+
+    # the number of batches the dataloader will return before one or more of the subtypes has returned all of its data
+    def num_batches(self):
+        return min([dataloader.dataset_len() //  for dataloader in self.dataloaders])

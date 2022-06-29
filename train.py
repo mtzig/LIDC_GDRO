@@ -4,6 +4,13 @@ import torch
 
 def train(dataloader, steps_per_epoch, model, loss_fn, optimizer):
     model.train()
+
+    print(steps_per_epoch)
+
+    steps_per_epoch = dataloader.dataset_len() /
+
+    print(steps_per_epoch)
+
     for i in range(steps_per_epoch):
 
         loss = loss_fn(next(dataloader))
@@ -39,9 +46,6 @@ def test(dataloader, steps_per_epoch, model, loss_fn, is_gdro):
                 num_samples[m] += batch_size
                 if not is_gdro:
                     test_loss += loss_fn(minibatch[m]).item()
-
-    print(subgroup_correct)
-    print(num_samples)
 
     test_loss /= steps_per_epoch
     subgroup_accuracy = subgroup_correct / num_samples

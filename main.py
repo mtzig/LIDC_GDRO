@@ -93,7 +93,7 @@ def create_subtyped_dataloader(df, subtype_df):
         subtype_data.append((data, labels))
 
     # wrap with dataset and dataloader
-    dataloader = SubtypedDataLoader(subtype_data, batch_size=[4, 4, 4, 4])
+    dataloader = SubtypedDataLoader(subtype_data, batch_size=batch_size, total=True)
 
     return dataloader
 
