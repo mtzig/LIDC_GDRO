@@ -1,7 +1,8 @@
 import torch
 
+
 class GDROLoss:
-    def __init__(self, model, loss_fn, hparams, normalize_loss = False):
+    def __init__(self, model, loss_fn, hparams, normalize_loss=False):
         self.model = model
         self.loss_fn = loss_fn
         self.q = torch.tensor([])
@@ -25,12 +26,12 @@ class GDROLoss:
             losses[m] = self.loss_fn(self.model(X), y)
 
             if self.normalize_loss:
-                loss[m] *= subgroup_batch_sizes[m] / total_samples
-            # if self.model.training:
-            #     self.q[m] *= torch.exp((self.hparams["groupdro_eta"] * losses[m].data))
+                losses[m] *= subgroup_batch_sizes[m] / total_samples
+            #if self.model.training:
+                #self.q[m] *= torch.exp((self.hparams["groupdro_eta"] * losses[m].data))
 
         if self.model.training:
-            self.q *= torch.exp(self.hparams["groupdro_eta"] * losses[m]) #vectorized (might not work)
+            self.q *= torch.exp(self.hparams["groupdro_eta"] * losses.data) #vectorized (might not work)
             self.q /= self.q.sum()
 
         #print(self.q)

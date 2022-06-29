@@ -36,7 +36,7 @@ epoch_size = 1334//batch_size
 
 is_gdro = True
 
-groupdro_hparams = {"groupdro_eta": 0.0}
+groupdro_hparams = {"groupdro_eta": 0.000}
 
 # if true, will randomly split test and training/validation data and save to csv
 # changing the feature names will require reshuffling the data to update the csvs
@@ -84,14 +84,13 @@ def create_subtyped_dataloader(df, subtype_df):
                 for nodule_id in df[id_name]], :]
 
     subtype_names = ["0benign", "1benign", "0malignant", "1malignant"]
-    subtype_dfs = {name: get_subtype_data(name) for name in subtype_names}
+    subtype_dfs = [get_subtype_data(name) for name in subtype_names]
 
     # separate into training and test sets
-    subtype_data = {}
-    for name in subtype_dfs:
-        data, labels = split_to_tensors(subtype_dfs[name])
-
-        subtype_data[name] = (data, labels)
+    subtype_data = []
+    for subtype in subtype_dfs:
+        data, labels = split_to_tensors(subtype)
+        subtype_data.append((data, labels))
 
     # wrap with dataset and dataloader
     dataloader = SubtypedDataLoader(subtype_data, batch_size=batch_size)
