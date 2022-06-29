@@ -6,8 +6,8 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 import models
 import train
-from datasets import NoduleDataset, SubtypedDataLoader
-from fast_data_loader import InfiniteDataLoader
+from datasets import NoduleDataset
+from dataloaders import InfiniteDataLoader, SubtypedDataLoader
 
 id_name = 'noduleID'
 feature_names = ['Area', 'ConvexArea', 'Perimeter', 'ConvexPerimeter', 'EquivDiameter',
@@ -34,10 +34,11 @@ train_csv = "MaxSliceTrainingValidationSetPreprocessed.csv"
 device = "cuda" if torch.cuda.is_available() else "cpu"
 training_fraction = 0.8
 batch_size = 40
+proportional = True
 
-is_gdro = False
+is_gdro = True
 
-groupdro_hparams = {"groupdro_eta": 0.0001}
+groupdro_hparams = {"groupdro_eta": 0.01}
 
 # if true, will randomly split test and training/validation data and save to csv
 # changing the feature names will require reshuffling the data to update the csvs
@@ -94,7 +95,7 @@ def create_subtyped_dataloader(df, subtype_df):
         subtype_data.append((data, labels))
 
     # wrap with dataset and dataloader
-    dataloader = SubtypedDataLoader(subtype_data, batch_size, total=False)
+    dataloader = SubtypedDataLoader(subtype_data, batch_size, total=proportional)
 
     return dataloader
 
@@ -141,7 +142,7 @@ def main():
     for epoch in range(epochs):
         print(f"Epoch {epoch + 1}\n-------------------------------")
         train.train(train_dataloader, model, loss_fn, optimizer)
-        train.test(test_dataloader, model, loss_fn, is_gdro)
+        train.test(test_dataloader, model)
     print("Done!")
 
 

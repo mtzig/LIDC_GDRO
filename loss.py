@@ -53,7 +53,4 @@ class ERMLoss:
 
         loss = self.loss_fn(self.model(X), y)
 
-        if self.model.training:
-            print(loss)
-
         return loss
