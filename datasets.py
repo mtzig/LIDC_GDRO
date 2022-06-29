@@ -58,7 +58,7 @@ class SubtypedDataLoader:
         if total:
             subtype_data_sizes = list(map(lambda x:len(x[0]), subtype_data))
             total_data_size = sum(subtype_data_sizes)
-            subtype_batch_sizes = list(map(lambda x:x//total_data_size+int(x==0)))
+            subtype_batch_sizes = list(map(lambda x:max(1,int(batch_size * x/total_data_size)), subtype_data_sizes))
 
 
         for idx, (features, labels) in enumerate(subtype_data):
