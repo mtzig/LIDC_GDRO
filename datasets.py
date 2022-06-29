@@ -71,15 +71,17 @@ class SubtypedDataLoader:
         else:
 
             #we define epoch as the batches to go through smallest subclass
-            self._batches_per_epoch = min(*subtype_data_sizes) // batch_size
+            self._batches_per_epoch = max(1, min(*subtype_data_sizes) // batch_size)
 
         self.dataloaders = []
 
         for idx, (features, labels) in enumerate(subtype_data):
             
             subtype_dataset = NoduleDataset(features, labels)
-            subclass_batch_size = batch_size if not total else subtype_batch_sizes[idx]
-            
+            subclass_batch_size = min(batch_size, subtype_data_sizes[idx]) if not total else subtype_batch_sizes[idx]
+
+            print(subclass_batch_size)
+
             subtype_iter_loader = InfiniteDataLoader(subtype_dataset, subclass_batch_size)
             self.dataloaders.append(subtype_iter_loader)
             
