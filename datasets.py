@@ -51,14 +51,26 @@ class SubtypedDataLoader:
                        or a batch size for entire minibatch
         
         total       : False if batch_size is for each subclass,
-                      True if batch_size is for entire minibatch     
+                      True if batch_size is for entire minibatch, (NOTE: actual batch size 
+                      might be different due to rouding)     
+
         '''
-        self.dataloaders = []
+
+
+        subtype_data_sizes = list(map(lambda x:len(x[0]), subtype_data)) #list of datapoints per subclass
+        total_data_size = sum(subtype_data_sizes)
 
         if total:
-            subtype_data_sizes = list(map(lambda x:len(x[0]), subtype_data))
-            total_data_size = sum(subtype_data_sizes)
+
+            #batch size for each subclass
             subtype_batch_sizes = list(map(lambda x:max(1,int(batch_size * x/total_data_size)), subtype_data_sizes))
+            
+            actual_batch_size = sum(subtype_batch_sizes)
+            self.batches_per_epoch = total_data_size // actual_batch_size
+        else:
+
+            #we define epoch as the batches to go through smallest subclass
+            self.batches_per_epoch = min(*subtype_data_sizes) // batch_size
 
         for idx, (features, labels) in enumerate(subtype_data):
             
@@ -84,9 +96,5 @@ class SubtypedDataLoader:
         '''
         return next(self.minibatch_iterator)
 
-    def dataset_len(self):
-        return sum([dataloader.dataset_len() for dataloader in self.dataloaders])
-
-    # the number of batches the dataloader will return before one or more of the subtypes has returned all of its data
-    def num_batches(self):
-        return min([dataloader.dataset_len() //  for dataloader in self.dataloaders])
+    def batches_per_epoch(self):
+        return self.batches_per_epoch
