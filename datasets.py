@@ -55,10 +55,16 @@ class SubtypedDataLoader:
         '''
         dataloaders = []
 
+        if total:
+            subtype_data_sizes = list(map(lambda x:len(x[0]), subtype_data))
+            total_data_size = sum(subtype_data_sizes)
+            subtype_batch_sizes = list(map(lambda x:x//total_data_size+int(x==0)))
+
+
         for idx, (features, labels) in enumerate(subtype_data):
             
             subtype_dataset = NoduleDataset(features, labels)
-            subclass_batch_size = batch_size if type(batch_size) == int else batch_size[idx]
+            subclass_batch_size = batch_size if not total else subtype_batch_sizes[idx]
             
             subtype_iter_loader = InfiniteDataLoader(subtype_dataset, subclass_batch_size)
             dataloaders.append(subtype_iter_loader)
