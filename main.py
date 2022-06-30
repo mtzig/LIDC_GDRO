@@ -6,8 +6,8 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 import models
 import train
-from datasets import NoduleDataset, SubtypedDataLoader
-from fast_data_loader import InfiniteDataLoader
+from datasets import NoduleDataset
+from dataloaders import InfiniteDataLoader, SubtypedDataLoader
 
 id_name = 'noduleID'
 feature_names = ['Area', 'ConvexArea', 'Perimeter', 'ConvexPerimeter', 'EquivDiameter',
@@ -34,10 +34,11 @@ train_csv = "MaxSliceTrainingValidationSetPreprocessed.csv"
 device = "cuda" if torch.cuda.is_available() else "cpu"
 training_fraction = 0.8
 batch_size = 40
+proportional = True
 
-is_gdro = False
+is_gdro = True
 
-groupdro_hparams = {"groupdro_eta": 0.0001}
+groupdro_hparams = {"groupdro_eta": 0.1}
 
 # if true, will randomly split test and training/validation data and save to csv
 # changing the feature names will require reshuffling the data to update the csvs
@@ -94,17 +95,17 @@ def create_subtyped_dataloader(df, subtype_df):
         subtype_data.append((data, labels))
 
     # wrap with dataset and dataloader
-    dataloader = SubtypedDataLoader(subtype_data, batch_size, total=False)
+    dataloader = SubtypedDataLoader(subtype_data, batch_size, total=proportional)
 
     return dataloader
 
 
 def main():
-    subtype_df = pd.read_csv("lidc_subtyped.csv")
+    subtype_df = pd.read_csv("data/lidc_subtyped.csv")
 
     if shuffle_data:
         # import data
-        df = pd.read_csv("LIDC_20130817_AllFeatures2D_MaxSlicePerNodule_inLineRatings.csv")
+        df = pd.read_csv("data/LIDC_20130817_AllFeatures2D_MaxSlicePerNodule_inLineRatings.csv")
 
         # preprocess data
         df = preprocess_data(df)
@@ -114,35 +115,53 @@ def main():
         training_df.to_csv("MaxSliceTrainingValidationSetPreprocessed.csv")
         test_df.to_csv("MaxSliceTestSetPreprocessed.csv")
     else:
-        training_df = pd.read_csv("MaxSliceTrainingValidationSetPreprocessed.csv")
-        test_df = pd.read_csv("MaxSliceTestSetPreprocessed.csv")
+        training_df = pd.read_csv("data/MaxSliceTrainingValidationSetPreprocessed.csv")
+        test_df = pd.read_csv("data/MaxSliceTestSetPreprocessed.csv")
 
     subtype_df.index = subtype_df["Nodule_id"].values
 
-    # create the training and testing dataloaders
-    if is_gdro:
-        train_dataloader = create_subtyped_dataloader(training_df, subtype_df)
-    else:
-        train_dataloader = create_dataloader(training_df)
+    N = 120
 
-    test_dataloader = create_subtyped_dataloader(test_df, subtype_df)
+    results = [[], []]
+    for is_gdro in [0, 1]:
 
-    # create and train model
-    model = models.NeuralNetwork(64, 32, 32, 2)
+        print("Running test: " + ["ERM", "GDRO"][is_gdro])
 
-    if is_gdro:
-        loss_fn = loss.GDROLoss(model, torch.nn.CrossEntropyLoss(), groupdro_hparams)
-    else:
-        loss_fn = loss.ERMLoss(model, torch.nn.CrossEntropyLoss(), {})
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=0.0005)
+        # create the training and testing dataloaders
+        if is_gdro:
+            train_dataloader = create_subtyped_dataloader(training_df, subtype_df)
+        else:
+            train_dataloader = create_dataloader(training_df)
 
-    epochs = 100
+        test_dataloader = create_subtyped_dataloader(test_df, subtype_df)
 
-    for epoch in range(epochs):
-        print(f"Epoch {epoch + 1}\n-------------------------------")
-        train.train(train_dataloader, model, loss_fn, optimizer)
-        train.test(test_dataloader, model, loss_fn, is_gdro)
-    print("Done!")
+        for i in range(N):
+
+            print(f"Trial {i + 1}/{N}")
+
+            # create and train model
+            model = models.NeuralNetwork(64, 32, 32, 2)
+
+            if is_gdro:
+                loss_fn = loss.GDROLoss(model, torch.nn.CrossEntropyLoss(), groupdro_hparams)
+            else:
+                loss_fn = loss.ERMLoss(model, torch.nn.CrossEntropyLoss(), {})
+            optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=0.005)
+
+            epochs = 40
+
+            for epoch in range(epochs):
+                print(f"Epoch {epoch + 1}/{epochs}")
+                train.train(train_dataloader, model, loss_fn, optimizer)
+                # train.test(test_dataloader, model)
+
+            results[is_gdro].append(train.test(test_dataloader, model))
+
+    results_df = pd.DataFrame(results)
+    results_df.to_csv("results")
+
+    print("Test complete")
+
 
 
 if __name__ == "__main__":

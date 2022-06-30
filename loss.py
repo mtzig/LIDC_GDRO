@@ -34,7 +34,7 @@ class GDROLoss:
             self.q *= torch.exp(self.hparams["groupdro_eta"] * losses.data) #vectorized (might not work)
             self.q /= self.q.sum()
 
-        #print(self.q)
+        # print(self.q)
 
         loss = torch.dot(losses, self.q)
 
@@ -52,8 +52,5 @@ class ERMLoss:
         X, y = minibatch
 
         loss = self.loss_fn(self.model(X), y)
-
-        if self.model.training:
-            print(loss)
 
         return loss
