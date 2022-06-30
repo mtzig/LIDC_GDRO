@@ -33,8 +33,8 @@ train_csv = "MaxSliceTrainingValidationSetPreprocessed.csv"
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 training_fraction = 0.8
-batch_size = 10
-proportional = False
+batch_size = 40
+proportional = True
 
 is_gdro = True
 
@@ -120,8 +120,12 @@ def main():
 
     subtype_df.index = subtype_df["Nodule_id"].values
 
-    results = pd.DataFrame(columns=["ERM", "GDRO"], index=range(30))
-    for is_gdro in [1]:
+    N = 120
+
+    results = [[], []]
+    for is_gdro in [0, 1]:
+
+        print("Running test: " + ["ERM", "GDRO"][is_gdro])
 
         # create the training and testing dataloaders
         if is_gdro:
@@ -131,7 +135,10 @@ def main():
 
         test_dataloader = create_subtyped_dataloader(test_df, subtype_df)
 
-        for i in range(1):
+        for i in range(N):
+
+            print(f"Trial {i + 1}/{N}")
+
             # create and train model
             model = models.NeuralNetwork(64, 32, 32, 2)
 
@@ -144,14 +151,16 @@ def main():
             epochs = 40
 
             for epoch in range(epochs):
-                print(f"Epoch {epoch + 1}\n-------------------------------")
+                print(f"Epoch {epoch + 1}/{epochs}")
                 train.train(train_dataloader, model, loss_fn, optimizer)
-                #train.test(test_dataloader, model)
+                # train.test(test_dataloader, model)
 
-            results.iloc[i, is_gdro] = train.test(test_dataloader, model)
-            print("Done!")
+            results[is_gdro].append(train.test(test_dataloader, model))
 
-    results.to_csv("results")
+    results_df = pd.DataFrame(results)
+    results_df.to_csv("results")
+
+    print("Test complete")
 
 
 

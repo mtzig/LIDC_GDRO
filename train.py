@@ -20,7 +20,7 @@ def train(dataloader, model, loss_fn, optimizer):
         optimizer.step()
 
     avg_loss /= steps_per_epoch
-    print("Average training loss:", avg_loss)
+    # print("Average training loss:", avg_loss)
 
 
 def test(dataloader, model):
