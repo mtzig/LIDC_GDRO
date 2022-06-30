@@ -26,7 +26,7 @@ class NeuralNetwork(nn.Module):
 
 class VGGNet(nn.Module):
 
-    def _init_(self, device = 'cpu'):
+    def __init__(self, device = 'cpu'):
         super(VGGNet, self).__init__()
 
         self.model = torchvision.models.vgg19(pretrained=True).to(device)
@@ -38,11 +38,11 @@ class VGGNet(nn.Module):
                 param.requires_grad = False
 
         self.classifier = nn.Sequential(
-          nn.Linear(in_features=25088, out_features=512, bias=True, device=DEVICE),
+          nn.Linear(in_features=25088, out_features=512, bias=True, device=device),
           nn.ReLU(inplace=True),
           nn.Dropout(p=0.5, inplace=False),
-          nn.Linear(in_features=512, out_features=4, bias=True, device=DEVICE)
+          nn.Linear(in_features=512, out_features=4, bias=True, device=device)
         )
 
-        def forward(self, x):
-            return self.model(x)
+    def forward(self, x):
+        return self.model(x)
