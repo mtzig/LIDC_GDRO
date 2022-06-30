@@ -37,12 +37,17 @@ class VGGNet(nn.Module):
             for param in layer.parameters():
                 param.requires_grad = False
 
-        self.classifier = nn.Sequential(
+        self.model.classifier = nn.Sequential(
           nn.Linear(in_features=25088, out_features=512, bias=True, device=device),
           nn.ReLU(inplace=True),
           nn.Dropout(p=0.5, inplace=False),
-          nn.Linear(in_features=512, out_features=4, bias=True, device=device)
+          nn.Linear(in_features=512, out_features=36, bias=True, device=device),
+          nn.ReLU(inplace=True),
+          nn.Dropout(p=0.5, inplace=False),
+          nn.Linear(in_features=36, out_features=1, bias=True, device=device)
         )
 
     def forward(self, x):
-        return self.model(x)
+        return self.model(x).squeeze()
+
+   

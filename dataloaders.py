@@ -22,7 +22,7 @@ class _InfiniteSampler(torch.utils.data.Sampler):
 
 
 class InfiniteDataLoader:
-    def __init__(self, dataset, batch_size, weights=None, num_workers=1):
+    def __init__(self, dataset, batch_size, weights=None, num_workers=0):
         super().__init__()
 
         if weights is not None:
