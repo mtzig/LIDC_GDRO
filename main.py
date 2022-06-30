@@ -110,8 +110,8 @@ def main():
     train_test = pd.read_csv("data/lidc_train_test_split_stratified.csv")
 
     # create train/test dataframes
-    training_df = df.loc[df["noduleID"].isin(train_test.loc[train_test["dataset"] == "train"]["noduleID"].values)]
-    test_df = df.loc[df["noduleID"].isin(train_test.loc[train_test["dataset"] == "test"]["noduleID"].values)]
+    training_df = df[df["noduleID"].isin(train_test[train_test["dataset"] == "train"]["noduleID"].values)]
+    test_df = df[df["noduleID"].isin(train_test[train_test["dataset"] == "test"]["noduleID"].values)]
 
     # use noduleIDs as index, it makes things easier
     subtype_df.index = subtype_df["noduleID"].values
@@ -158,7 +158,6 @@ def main():
     results_df.to_csv("results")
 
     print("Test complete")
-
 
 
 if __name__ == "__main__":
