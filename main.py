@@ -101,11 +101,11 @@ def create_subtyped_dataloader(df, subtype_df):
 
 
 def main():
-    subtype_df = pd.read_csv("lidc_subtyped.csv")
+    subtype_df = pd.read_csv("data/lidc_subtyped.csv")
 
     if shuffle_data:
         # import data
-        df = pd.read_csv("LIDC_20130817_AllFeatures2D_MaxSlicePerNodule_inLineRatings.csv")
+        df = pd.read_csv("data/LIDC_20130817_AllFeatures2D_MaxSlicePerNodule_inLineRatings.csv")
 
         # preprocess data
         df = preprocess_data(df)
@@ -115,8 +115,8 @@ def main():
         training_df.to_csv("MaxSliceTrainingValidationSetPreprocessed.csv")
         test_df.to_csv("MaxSliceTestSetPreprocessed.csv")
     else:
-        training_df = pd.read_csv("MaxSliceTrainingValidationSetPreprocessed.csv")
-        test_df = pd.read_csv("MaxSliceTestSetPreprocessed.csv")
+        training_df = pd.read_csv("data/MaxSliceTrainingValidationSetPreprocessed.csv")
+        test_df = pd.read_csv("data/MaxSliceTestSetPreprocessed.csv")
 
     subtype_df.index = subtype_df["Nodule_id"].values
 
