@@ -28,8 +28,6 @@ feature_names = ['Area', 'ConvexArea', 'Perimeter', 'ConvexPerimeter', 'EquivDia
                  'Variance', 'Clustertendency']
 label_name = 'malignancy'
 all_data_csv = "LIDC_20130817_AllFeatures2D_MaxSlicePerNodule_inLineRatings.csv"
-test_csv = "MaxSliceTestSetPreprocessed.csv"
-train_csv = "MaxSliceTrainingValidationSetPreprocessed.csv"
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 training_fraction = 0.8
@@ -103,21 +101,19 @@ def create_subtyped_dataloader(df, subtype_df):
 def main():
     subtype_df = pd.read_csv("data/lidc_spic_subgrouped.csv")
 
-    if shuffle_data:
-        # import data
-        df = pd.read_csv("data/LIDC_20130817_AllFeatures2D_MaxSlicePerNodule_inLineRatings.csv")
+    # import data
+    df = pd.read_csv("data/LIDC_20130817_AllFeatures2D_MaxSlicePerNodule_inLineRatings.csv")
+    # preprocess data (normalization, remove anything that isn't in the chosen features)
+    df = preprocess_data(df)
 
-        # preprocess data
-        df = preprocess_data(df)
+    # import train/test flags
+    train_test = pd.read_csv("data/lidc_train_test_split_stratified.csv")
 
-        training_df = df.sample(frac=training_fraction)
-        test_df = df.drop(training_df.index)
-        training_df.to_csv("data/MaxSliceTrainingValidationSetPreprocessed.csv")
-        test_df.to_csv("data/MaxSliceTestSetPreprocessed.csv")
-    else:
-        training_df = pd.read_csv("data/MaxSliceTrainingValidationSetPreprocessed.csv")
-        test_df = pd.read_csv("data/MaxSliceTestSetPreprocessed.csv")
+    # create train/test dataframes
+    training_df = df.loc[df["noduleID"].isin(train_test.loc[train_test["dataset"] == "train"]["noduleID"].values)]
+    test_df = df.loc[df["noduleID"].isin(train_test.loc[train_test["dataset"] == "test"]["noduleID"].values)]
 
+    # use noduleIDs as index, it makes things easier
     subtype_df.index = subtype_df["noduleID"].values
 
     N = 120
@@ -141,6 +137,7 @@ def main():
 
             # create and train model
             model = models.NeuralNetwork(64, 32, 32, 2)
+            model.to(device)
 
             if is_gdro:
                 loss_fn = loss.GDROLoss(model, torch.nn.CrossEntropyLoss(), groupdro_hparams)
@@ -151,7 +148,7 @@ def main():
             epochs = 40
 
             for epoch in range(epochs):
-                print(f"Epoch {epoch + 1}/{epochs}")
+                # print(f"Epoch {epoch + 1}/{epochs}")
                 train.train(train_dataloader, model, loss_fn, optimizer)
                 # train.test(test_dataloader, model)
 
