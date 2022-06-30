@@ -81,11 +81,11 @@ def create_dataloader(df):
 def create_subtyped_dataloader(df, subtype_df):
     def get_subtype_data(subtype_name):
         return df.loc[
-               [subtype_df.at[nodule_id, "subtype"] == subtype_name
-                if nodule_id in subtype_df["Nodule_id"].values else False
+               [subtype_df.at[nodule_id, "subgroup"] == subtype_name
+                if nodule_id in subtype_df["noduleID"].values else False
                 for nodule_id in df[id_name]], :]
 
-    subtype_names = ["0benign", "1benign", "0malignant", "1malignant"]
+    subtype_names = ["unmarked_benign", "marked_benign", "marked_malignant", "unmarked_malignant"]
     subtype_dfs = [get_subtype_data(name) for name in subtype_names]
 
     # separate into training and test sets
@@ -101,7 +101,7 @@ def create_subtyped_dataloader(df, subtype_df):
 
 
 def main():
-    subtype_df = pd.read_csv("data/lidc_subtyped.csv")
+    subtype_df = pd.read_csv("data/lidc_spic_subgrouped.csv")
 
     if shuffle_data:
         # import data
@@ -118,7 +118,7 @@ def main():
         training_df = pd.read_csv("data/MaxSliceTrainingValidationSetPreprocessed.csv")
         test_df = pd.read_csv("data/MaxSliceTestSetPreprocessed.csv")
 
-    subtype_df.index = subtype_df["Nodule_id"].values
+    subtype_df.index = subtype_df["noduleID"].values
 
     N = 120
 
