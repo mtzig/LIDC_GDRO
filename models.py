@@ -41,7 +41,7 @@ class VGGNet(nn.Module):
           nn.Linear(in_features=25088, out_features=512, bias=True, device=device),
           nn.ReLU(inplace=True),
           nn.Dropout(p=0.5, inplace=False),
-          nn.Linear(in_features=512, out_features=2, bias=True, device=device)
+          nn.Linear(in_features=512, out_features=1, bias=True, device=device)
         )
 
     def forward(self, x):
