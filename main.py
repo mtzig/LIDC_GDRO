@@ -112,8 +112,8 @@ def main():
 
         training_df = df.sample(frac=training_fraction)
         test_df = df.drop(training_df.index)
-        training_df.to_csv("MaxSliceTrainingValidationSetPreprocessed.csv")
-        test_df.to_csv("MaxSliceTestSetPreprocessed.csv")
+        training_df.to_csv("data/MaxSliceTrainingValidationSetPreprocessed.csv")
+        test_df.to_csv("data/MaxSliceTestSetPreprocessed.csv")
     else:
         training_df = pd.read_csv("data/MaxSliceTrainingValidationSetPreprocessed.csv")
         test_df = pd.read_csv("data/MaxSliceTestSetPreprocessed.csv")
