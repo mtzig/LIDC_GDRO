@@ -2,7 +2,7 @@ import numpy as np
 import torch
 
 
-def train(dataloader, model, loss_fn, optimizer):
+def train(dataloader, model, loss_fn, optimizer, verbose=False):
     model.train()
 
     steps_per_epoch = dataloader.batches_per_epoch()
@@ -20,7 +20,9 @@ def train(dataloader, model, loss_fn, optimizer):
         optimizer.step()
 
     avg_loss /= steps_per_epoch
-    # print("Average training loss:", avg_loss)
+
+    if verbose:
+        print("Average training loss:", avg_loss)
 
 
 def test(dataloader, model):
