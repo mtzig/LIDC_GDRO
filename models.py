@@ -1,4 +1,6 @@
 from torch import nn
+import torchvision
+
 
 
 # generic fully-connected neural network class
@@ -19,3 +21,28 @@ class NeuralNetwork(nn.Module):
         x = self.flatten(x)
         logits = self.linear_relu_stack(x)
         return logits
+
+
+
+class VGGNet(nn.Module):
+
+    def _init_(self, device = 'cpu'):
+        super(VGGNet, self).__init__()
+
+        self.model = torchvision.models.vgg19(pretrained=True).to(device)
+
+        #freeze all but last layer
+        last_layer_idx = 34
+        for layer in list(self.model.features.children())[:last_layer_idx]:
+            for param in layer.parameters():
+                param.requires_grad = False
+
+        self.classifier = nn.Sequential(
+          nn.Linear(in_features=25088, out_features=512, bias=True, device=DEVICE),
+          nn.ReLU(inplace=True),
+          nn.Dropout(p=0.5, inplace=False),
+          nn.Linear(in_features=512, out_features=4, bias=True, device=DEVICE)
+        )
+
+        def forward(self, x):
+            return self.model(x)
