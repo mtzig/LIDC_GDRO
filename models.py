@@ -56,13 +56,14 @@ class ResNet18(nn.Module):
         super(ResNet18, self).__init__()
 
         self.model = torchvision.models.resnet18(pretrained=pretrained).to(device)
+        
+        if pretrained:
+            for param in self.model.parameters():
+                param.requires_grad = False
 
-        for param in self.model.parameters():
-            param.requires_grad = False
 
-
-        for param in self.model.layer4.parameters():
-            param.requires_grad = True
+            for param in self.model.layer4.parameters():
+                param.requires_grad = True
 
         self.model.fc = nn.Sequential(
           nn.Linear(in_features=512, out_features=36, bias=True, device=device),
