@@ -116,7 +116,7 @@ def main():
     # use noduleIDs as index, it makes things easier
     subtype_df.index = subtype_df["noduleID"].values
 
-    N = 120
+    N = 1
 
     results = [[], []]
     for is_gdro in [0, 1]:
