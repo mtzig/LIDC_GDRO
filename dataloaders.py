@@ -71,7 +71,7 @@ class SubtypedDataLoader:
 
     '''
 
-    def __init__(self, subtype_data, batch_size, total=False):
+    def __init__(self, subtype_data, batch_size, total=False, singular=False):
         '''
         INPUTS:
         subtype_data: list of data for each subclass, e.g.
@@ -107,7 +107,7 @@ class SubtypedDataLoader:
         self.dataloaders = []
 
         for idx, (features, labels) in enumerate(subtype_data):
-            subtype_dataset = NoduleDataset(features, labels)
+            subtype_dataset = NoduleDataset(features, labels, singular=singular)
             subclass_batch_size = min(batch_size, subtype_data_sizes[idx]) if not total else subtype_batch_sizes[idx]
 
             subtype_iter_loader = InfiniteDataLoader(subtype_dataset, subclass_batch_size)
