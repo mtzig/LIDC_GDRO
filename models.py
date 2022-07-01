@@ -52,12 +52,12 @@ class VGGNet(nn.Module):
 
 class ResNet18(nn.Module):
 
-    def __init__(self, device='cpu', pretrained=True):
+    def __init__(self, device='cpu', pretrained=True, freeze=True):
         super(ResNet18, self).__init__()
 
         self.model = torchvision.models.resnet18(pretrained=pretrained).to(device)
         
-        if pretrained:
+        if pretrained and freeze:
             for param in self.model.parameters():
                 param.requires_grad = False
 
