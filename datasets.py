@@ -27,5 +27,5 @@ class NoduleDataset(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
         
-        label = self.labels[0] if self.singular else self.labels[idx]
+        label = self.labels if self.singular else self.labels[idx]
         return self.features[idx], label
