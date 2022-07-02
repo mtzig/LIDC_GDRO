@@ -72,6 +72,10 @@ class ResNet18(nn.Module):
           nn.Linear(in_features=36, out_features=1, bias=True, device=device)
         )
 
+        for layer in self.model.fc:
+            if hasattr(layer, 'weight'):
+                nn.init.xavier_uniform_(layer.weight)
+
     def forward(self, x):
         return self.model(x).squeeze()
 
