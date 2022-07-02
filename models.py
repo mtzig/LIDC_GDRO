@@ -62,8 +62,8 @@ class ResNet18(nn.Module):
                 param.requires_grad = False
 
 
-            for param in self.model.layer4.parameters():
-                param.requires_grad = True
+            # for param in self.model.layer4.parameters():
+            #     param.requires_grad = True
 
         self.model.fc = nn.Sequential(
           nn.Linear(in_features=512, out_features=36, bias=True, device=device),
