@@ -33,7 +33,7 @@ class VGGNet(nn.Module):
 
         #freeze all but last layer
         last_layer_idx = 34
-        for layer in list(self.model.features.children())[:last_layer_idx]:
+        for layer in list(self.model.features.children()):#[:last_layer_idx]:
             for param in layer.parameters():
                 param.requires_grad = False
 
