@@ -33,7 +33,7 @@ class VGGNet(nn.Module):
 
         #freeze all but last layer
         last_layer_idx = 34
-        for layer in list(self.model.features.children()):#[:last_layer_idx]:
+        for layer in list(self.model.features.children())[:last_layer_idx]:
             for param in layer.parameters():
                 param.requires_grad = False
 
@@ -62,14 +62,14 @@ class ResNet18(nn.Module):
                 param.requires_grad = False
 
 
-            # for param in self.model.layer4.parameters():
-            #     param.requires_grad = True
+            for param in self.model.layer4.parameters():
+                param.requires_grad = True
 
         self.model.fc = nn.Sequential(
-          nn.Linear(in_features=512, out_features=36, bias=True, device=device),
-          nn.ReLU(inplace=True),
-          nn.Dropout(p=0.5, inplace=False),
-          nn.Linear(in_features=36, out_features=1, bias=True, device=device)
+          nn.Linear(in_features=512, out_features=2, bias=True, device=device),
+        #   nn.ReLU(inplace=True),
+        #   nn.Dropout(p=0.5, inplace=False),
+        #   nn.Linear(in_features=36, out_features=1, bias=True, device=device)
         )
 
         for layer in self.model.fc:
