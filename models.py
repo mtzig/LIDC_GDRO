@@ -66,10 +66,10 @@ class ResNet18(nn.Module):
                 param.requires_grad = True
 
         self.model.fc = nn.Sequential(
-          nn.Linear(in_features=512, out_features=2, bias=True, device=device),
-        #   nn.ReLU(inplace=True),
-        #   nn.Dropout(p=0.5, inplace=False),
-        #   nn.Linear(in_features=36, out_features=1, bias=True, device=device)
+          nn.Linear(in_features=512, out_features=36, bias=True, device=device),
+          nn.ReLU(inplace=True),
+          nn.Dropout(p=0.5, inplace=False),
+          nn.Linear(in_features=36, out_features=2, bias=True, device=device)
         )
 
         for layer in self.model.fc:
