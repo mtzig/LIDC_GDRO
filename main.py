@@ -43,8 +43,8 @@ def preprocess_data(df):
     # select features and labels
     df = df.loc[:, [id_name, *feature_names, label_name]]
 
-    # remove malignancy = 3
-    df = df[df[label_name] != 3]
+    # remove malignancy = 3 or out of range 1-5
+    df = df[df[label_name].isin([1, 2, 4, 5])]
 
     # binarize the remaining malignancy [1,2] -> 0, [4,5] -> 1
     df[label_name] = [int(m - 3 > 0) for m in df[label_name]]
@@ -76,12 +76,12 @@ def create_subtyped_dataloader(df, subtype_df):
     def get_subtype_data(subtype_name):
         # get all rows of df where the nodule id is associated with subtype_name
         return df.loc[
-               [subtype_df.at[nodule_id, "subtype"] == subtype_name for nodule_id in df[id_name]], :]
+               [subtype_df.at[nodule_id, "subgroup"] == subtype_name for nodule_id in df[id_name]], :]
 
     #df = df[df[id_name].isin(subtype_df[id_name])]
     #subtype_df = subtype_df[subtype_df[id_name].isin(df[id_name])]
 
-    subtype_names = [0, 1, 2, 3, 4]
+    subtype_names = ["unmarked_benign", "marked_benign", "marked_malignant", "unmarked_malignant"]
     subtype_dfs = [get_subtype_data(name) for name in subtype_names]
 
     # separate into training and test sets
@@ -97,7 +97,7 @@ def create_subtyped_dataloader(df, subtype_df):
 
 
 def main():
-    subtype_df = pd.read_csv("data/LIDC_DICOM_subtyped.csv")
+    subtype_df = pd.read_csv("data/LIDC_spic_subgrouped_radiologist.csv")
 
     # import data
     df = pd.read_csv("data/LIDC_individual_radiologists.csv")
@@ -105,7 +105,7 @@ def main():
     df = preprocess_data(df)
 
     # import train/test flags
-    train_test = pd.read_csv("data/lidc_train_test_split_stratified.csv")
+    train_test = pd.read_csv("data/lidc_train_test_radiologist.csv")
 
     # create train/test dataframes
     training_df = df[df["noduleID"].isin(train_test[train_test["dataset"] == "train"]["noduleID"].values)]
@@ -114,7 +114,7 @@ def main():
     # use noduleIDs as index, it makes things easier
     subtype_df.index = subtype_df["noduleID"].values
 
-    N = 120
+    N = 60
 
     results = [[], []]
     for is_gdro in [0, 1]:
