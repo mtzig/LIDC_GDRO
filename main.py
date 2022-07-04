@@ -31,7 +31,7 @@ all_data_csv = "LIDC_20130817_AllFeatures2D_MaxSlicePerNodule_inLineRatings.csv"
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 training_fraction = 0.8
-batch_size = 40
+batch_size = 160
 proportional = True
 
 is_gdro = True
@@ -153,7 +153,7 @@ def main():
             results[is_gdro].append(train.test(test_dataloader, model))
 
     results_df = pd.DataFrame(results)
-    results_df.to_csv("results")
+    results_df.to_csv("results_spic.csv.csv")
 
     print("Test complete")
 
