@@ -38,10 +38,6 @@ is_gdro = True
 
 groupdro_hparams = {"groupdro_eta": 0.1}
 
-# if true, will randomly split test and training/validation data and save to csv
-# changing the feature names will require reshuffling the data to update the csvs
-shuffle_data = False
-
 
 def preprocess_data(df):
     # select features and labels
@@ -100,7 +96,7 @@ def create_subtyped_dataloader(df, subtype_df):
 
 
 def main():
-    subtype_df = pd.read_csv("data/lidc_DICOM_subtyped.csv")
+    subtype_df = pd.read_csv("data/LIDC_DICOM_subtyped.csv")
 
     # import data
     df = pd.read_csv("data/LIDC_20130817_AllFeatures2D_MaxSlicePerNodule_inLineRatings.csv")
