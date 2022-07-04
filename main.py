@@ -74,6 +74,7 @@ def create_dataloader(df):
 
 def create_subtyped_dataloader(df, subtype_df):
     def get_subtype_data(subtype_name):
+        # get all rows of df where the nodule id is associated with subtype_name
         return df.loc[
                [subtype_df.at[nodule_id, "subtype"] == subtype_name for nodule_id in df[id_name]], :]
 
@@ -99,12 +100,12 @@ def main():
     subtype_df = pd.read_csv("data/LIDC_DICOM_subtyped.csv")
 
     # import data
-    df = pd.read_csv("data/LIDC_20130817_AllFeatures2D_MaxSlicePerNodule_inLineRatings.csv")
+    df = pd.read_csv("data/LIDC_individual_radiologists.csv")
     # preprocess data (normalization, remove anything that isn't in the chosen features)
     df = preprocess_data(df)
 
     # import train/test flags
-    train_test = pd.read_csv("data/lidc_train_test_split_DICOM_stratified.csv")
+    train_test = pd.read_csv("data/lidc_train_test_split_stratified.csv")
 
     # create train/test dataframes
     training_df = df[df["noduleID"].isin(train_test[train_test["dataset"] == "train"]["noduleID"].values)]
