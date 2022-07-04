@@ -97,7 +97,7 @@ def create_subtyped_dataloader(df, subtype_df):
 
 
 def main():
-    subtype_df = pd.read_csv("data/LIDC_spic_subgrouped_radiologist.csv")
+    subtype_df = pd.read_csv("data/lidc_spic_subgrouped_radiologist.csv")
 
     # import data
     df = pd.read_csv("data/LIDC_individual_radiologists.csv")
