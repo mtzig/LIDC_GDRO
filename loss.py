@@ -43,16 +43,70 @@ class GDROLoss:
         return loss
 
 
+class GDROLossAlt:
+    '''
+    GDROLoss function to be used with SubclassedNoduleDataset
+    '''
+
+    def __init__(self, model, loss_fn, eta, num_subclasses):
+        self.model = model
+        self.loss_fn = loss_fn
+        self.q = torch.tensor([])
+        self.eta = eta
+        self.num_subclasses = num_subclasses
+        
+
+    def __call__(self, minibatch):
+        # minibatch contains n batches of data where n is the number of subtypes
+        
+        X, y, c = minibatch
+
+        batch_size = X.shape[0]
+        device = X.device
+
+        if len(self.q) == 0:
+            self.q = torch.ones(self.num_subclasses).to(device)
+
+        losses = torch.zeros(self.num_subclasses).to(device)
+
+        subclass_rel_freq = torch.zeros(self.num_subclasses).to(device)
+
+        # computes loss
+        # get relative frequency of samples in each subclass
+        for subclass in range(self.num_subclasses):
+            subclass_idx = c == subclass
+            losses[subclass] = self.loss_fn(self.model(X[subclass_idx]), y[subclass_idx])
+            subclass_rel_freq[subclass] = torch.sum(subclass_idx) / batch_size
+            
+        # normalize loss
+        losses *= subclass_rel_freq
+
+
+        #update q
+        if self.model.training:
+            self.q *= torch.exp(self.eta * losses.data)
+            self.q /= self.q.sum()
+
+        #calculate and return loss
+        loss = torch.dot(losses, self.q)
+        return loss
+
+
+
 class ERMLoss:
-    def __init__(self, model, loss_fn, hparams):
+    def __init__(self, model, loss_fn, hparams, subclassed=False):
         self.model = model
         self.loss_fn = loss_fn
         self.hparams = hparams
+        self.subclassed = subclassed #true if we are using SubclassedNoduleDataset
 
     def __call__(self, minibatch):
         # minibatch contains one batch of non-subtyped data
-
-        X, y = minibatch
+        
+        if self.subclassed:
+            X, y, _ = minibatch
+        else:
+            X, y = minibatch
 
         loss = self.loss_fn(self.model(X), y)
 
