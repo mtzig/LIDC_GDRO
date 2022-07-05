@@ -30,13 +30,16 @@ label_name = 'malignancy'
 all_data_csv = "LIDC_20130817_AllFeatures2D_MaxSlicePerNodule_inLineRatings.csv"
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
+
+print(device)
+
 training_fraction = 0.8
 batch_size = 160
 proportional = True
 
 is_gdro = True
 
-groupdro_hparams = {"groupdro_eta": 0.1}
+hparams = {"groupdro_eta": 0.1}
 
 
 def preprocess_data(df):
@@ -116,10 +119,10 @@ def main():
 
     N = 60
 
-    results = [[], []]
-    for is_gdro in [0, 1]:
+    results = [[], [], []]
+    for is_gdro in []:#[0, 1, 2]:
 
-        print("Running test: " + ["ERM", "GDRO"][is_gdro])
+        print("Running test: " + ["ERM", "GDRO", "Combined"][is_gdro])
 
         # create the training and testing dataloaders
         if is_gdro:
@@ -137,10 +140,12 @@ def main():
             model = models.NeuralNetwork(64, 32, 32, 2)
             model.to(device)
 
-            if is_gdro:
-                loss_fn = loss.GDROLoss(model, torch.nn.CrossEntropyLoss(), groupdro_hparams)
+            if is_gdro == 0:
+                loss_fn = loss.ERMLoss(model, torch.nn.CrossEntropyLoss(), hparams)
+            elif is_gdro == 1:
+                loss_fn = loss.GDROLoss(model, torch.nn.CrossEntropyLoss(), hparams)
             else:
-                loss_fn = loss.ERMLoss(model, torch.nn.CrossEntropyLoss(), {})
+                loss_fn = loss.ERMGDROLoss(model, torch.nn.CrossEntropyLoss(), hparams)
             optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=0.005)
 
             epochs = 40
@@ -153,7 +158,7 @@ def main():
             results[is_gdro].append(train.test(test_dataloader, model))
 
     results_df = pd.DataFrame(results)
-    results_df.to_csv("results_spic.csv.csv")
+    results_df.to_csv("results.csv")
 
     print("Test complete")
 

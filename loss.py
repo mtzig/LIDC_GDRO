@@ -10,6 +10,8 @@ class GDROLoss:
         self.normalize_loss = normalize_loss
 
     def __call__(self, minibatch):
+        # minibatch contains n batches of data where n is the number of subtypes
+
         device = "cuda" if minibatch[0][0].is_cuda else "cpu"
 
         if len(self.q) == 0:
@@ -22,7 +24,7 @@ class GDROLoss:
             total_samples = sum(subgroup_batch_sizes)
 
         for m in range(len(minibatch)):
-            X, y = minibatch[m] 
+            X, y = minibatch[m]
             losses[m] = self.loss_fn(self.model(X), y)
 
             if self.normalize_loss:
@@ -48,9 +50,42 @@ class ERMLoss:
         self.hparams = hparams
 
     def __call__(self, minibatch):
+        # minibatch contains one batch of non-subtyped data
 
         X, y = minibatch
 
         loss = self.loss_fn(self.model(X), y)
+
+        return loss
+
+
+class ERMGDROLoss:
+    def __init__(self, model, loss_fn, hparams, normalize_loss=False):
+        self.hparams = hparams
+        self.model = model
+        self.t = 1
+        self.erm = ERMLoss(model, loss_fn, hparams)
+        self.gdro = GDROLoss(model, loss_fn, hparams, normalize_loss)
+
+        # used to record the initial loss to set a baseline for the interpolation
+        self.initial_loss = 0
+
+    def __call__(self, minibatch):
+        # minibatch contains n batches of data where n is the number of subtypes
+
+        # remove subtype info for the ERM loss function
+        unsubtyped_batch = torch.cat(minibatch)
+
+        # linearly interpolate between ERM and GDRO loss functions
+        loss = self.t * self.erm(unsubtyped_batch) + (1 - self.t) * self.gdro(minibatch)
+
+        # record initial loss value
+        if self.initial_loss == 0:
+            self.initial_loss = loss.item()
+
+        # update t based on the loss
+        if self.model.training:
+            # reduce t proportional to loss TODO experiment with different ways to change t as the model trains
+            t = loss.item() / self.initial_loss
 
         return loss
