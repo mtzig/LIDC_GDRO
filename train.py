@@ -25,7 +25,7 @@ def train(dataloader, model, loss_fn, optimizer, verbose=False):
         print("Average training loss:", avg_loss)
 
 
-def test(dataloader, model):
+def test(dataloader, model, verbose=False):
     model.eval()
 
     steps_per_epoch = dataloader.batches_per_epoch()
@@ -51,6 +51,7 @@ def test(dataloader, model):
 
     accuracy = sum(subgroup_correct)/sum(num_samples)
 
-    print("Accuracy:", accuracy, "\nAccuracy over subgroups:", subgroup_accuracy, "\nWorst Group Accuracy:", min(subgroup_accuracy))
+    if verbose:
+        print("Accuracy:", accuracy, "\nAccuracy over subgroups:", subgroup_accuracy, "\nWorst Group Accuracy:", min(subgroup_accuracy))
 
-    return accuracy, subgroup_accuracy
+    return accuracy, *subgroup_accuracy
