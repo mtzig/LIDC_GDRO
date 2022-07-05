@@ -6,7 +6,7 @@ class GDROLoss:
         self.model = model
         self.loss_fn = loss_fn
         self.q = torch.tensor([])
-        self.hparams = hparams
+        self.eta = hparams["groupdro_eta"]
         self.normalize_loss = normalize_loss
 
     def __call__(self, minibatch):
@@ -33,7 +33,7 @@ class GDROLoss:
                 #self.q[m] *= torch.exp((self.hparams["groupdro_eta"] * losses[m].data))
 
         if self.model.training:
-            self.q *= torch.exp(self.hparams["groupdro_eta"] * losses.data) #vectorized (might not work)
+            self.q *= torch.exp(self.eta * losses.data) #vectorized (might not work)
             self.q /= self.q.sum()
 
         # print(self.q)
@@ -74,18 +74,22 @@ class ERMGDROLoss:
         # minibatch contains n batches of data where n is the number of subtypes
 
         # remove subtype info for the ERM loss function
-        unsubtyped_batch = torch.cat(minibatch)
+        unzipped = list(zip(*minibatch))
+        unsubtyped_batch = torch.cat(unzipped[0]), torch.cat(unzipped[1])
 
         # linearly interpolate between ERM and GDRO loss functions
+        self.gdro.eta = self.hparams["groupdro_eta"] * (1 - self.t)
         loss = self.t * self.erm(unsubtyped_batch) + (1 - self.t) * self.gdro(minibatch)
 
         # record initial loss value
-        if self.initial_loss == 0:
-            self.initial_loss = loss.item()
+        # if self.initial_loss == 0:
+            # self.initial_loss = loss.item()
 
         # update t based on the loss
-        if self.model.training:
+        # if self.model.training:
             # reduce t proportional to loss TODO experiment with different ways to change t as the model trains
-            t = loss.item() / self.initial_loss
+            # self.t = loss.item() / self.initial_loss
+
+        # print(loss.item(), self.t)
 
         return loss
