@@ -48,16 +48,15 @@ class GDROLossAlt:
     GDROLoss function to be used with SubclassedNoduleDataset
     '''
 
-    def __init__(self, model, loss_fn, eta, num_subclasses):
+    def __init__(self, model, loss_fn, eta, num_subclasses, rescale=False):
         self.model = model
         self.loss_fn = loss_fn
         self.q = torch.tensor([])
         self.eta = eta
         self.num_subclasses = num_subclasses
-        
+        self.rescale = rescale
 
     def __call__(self, minibatch):
-        # minibatch contains n batches of data where n is the number of subtypes
         
         X, y, c = minibatch
 
@@ -69,28 +68,36 @@ class GDROLossAlt:
 
         losses = torch.zeros(self.num_subclasses).to(device)
 
-        subclass_rel_freq = torch.zeros(self.num_subclasses).to(device)
+        subclass_counts = torch.zeros(self.num_subclasses).to(device)
+
+        preds = self.model(X)
 
         # computes loss
-        # get relative frequency of samples in each subclass
+        # get relative frequency of samples in each subclass        
         for subclass in range(self.num_subclasses):
             subclass_idx = c == subclass
-            losses[subclass] = self.loss_fn(self.model(X[subclass_idx]), y[subclass_idx])
-            subclass_rel_freq[subclass] = torch.sum(subclass_idx) / batch_size
-            
-        # normalize loss
-        losses *= subclass_rel_freq
+            subclass_counts[subclass] = torch.sum(subclass_idx)
 
+            #only compute loss if there are actually samples in that class
+            if subclass_counts[subclass] > 0:
+              losses[subclass] = self.loss_fn(preds[subclass_idx], y[subclass_idx])
+        
 
         #update q
         if self.model.training:
             self.q *= torch.exp(self.eta * losses.data)
             self.q /= self.q.sum()
 
-        #calculate and return loss
-        loss = torch.dot(losses, self.q)
-        return loss
+        #rescale loss
+        if self.rescale:
+          losses *= subclass_counts
+          loss = torch.dot(losses, self.q)
+          loss /= batch_size
+          loss *= self.num_subclasses
+        else:
+          loss = torch.dot(losses, self.q)
 
+        return loss
 
 
 class ERMLoss:
