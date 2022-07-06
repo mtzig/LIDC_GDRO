@@ -16,6 +16,7 @@ class GDROLoss:
 
         if len(self.q) == 0:
             self.q = torch.ones(len(minibatch)).to(device)
+            self.q /= self.q.sum()
 
         losses = torch.zeros(len(minibatch)).to(device)
 
