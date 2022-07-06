@@ -51,7 +51,6 @@ class GDROLossAlt:
         self.q = torch.tensor([])
         self.eta = eta
         self.num_subclasses = num_subclasses
-        self.rescale = rescale
 
     def __call__(self, minibatch):
         
