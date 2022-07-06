@@ -128,7 +128,14 @@ class ERMGDROLoss:
 
         # linearly interpolate between ERM and GDRO loss functions
         self.gdro.eta = self.hparams["groupdro_eta"] * (1 - self.t)
-        loss = self.t * self.erm(unsubtyped_batch) + (1 - self.t) * self.gdro(minibatch)
+
+        # cases for t=0 or t=1 save time for certain algorithms
+        if self.t == 0:
+            loss = self.gdro(minibatch)
+        elif self.t == 1:
+            loss = self.erm(unsubtyped_batch)
+        else:
+            loss = self.t * self.erm(unsubtyped_batch) + (1 - self.t) * self.gdro(minibatch)
 
         # record initial loss value
         # if self.initial_loss == 0:
