@@ -1,4 +1,6 @@
 import numpy as np
+
+import data_util
 import torch
 
 
@@ -28,24 +30,23 @@ def train(dataloader, model, loss_fn, optimizer, verbose=False):
 def test(dataloader, model, verbose=False):
     model.eval()
 
+    num_subclasses = len(data_util.subclasses)
+
     steps_per_epoch = dataloader.batches_per_epoch()
 
-    num_samples = []
-    subgroup_correct = []
+    num_samples = np.zeros(num_subclasses)
+    subgroup_correct = np.zeros(num_subclasses)
     with torch.no_grad():
         for i in range(steps_per_epoch):
             minibatch = next(dataloader)
 
-            if len(subgroup_correct) == 0:
-                subgroup_correct = np.zeros(len(minibatch))
-                num_samples = np.zeros(len(minibatch))
+            X, y, c = minibatch
+            pred = model(X)
 
-            for m in range(len(minibatch)):
-                X, y = minibatch[m]
-                batch_size = X.shape[0]
-                pred = model(X)
-                subgroup_correct[m] += (pred.argmax(1) == y).type(torch.float).sum().item()
-                num_samples[m] += batch_size
+            for subclass in range(num_subclasses):
+                subclass_idx = c == subclass
+                num_samples[subclass] += torch.sum(subclass_idx)
+                subgroup_correct[subclass] += (pred[subclass_idx].argmax(1) == y[subclass_idx]).type(torch.float).sum().item()
 
     subgroup_accuracy = subgroup_correct / num_samples
 
