@@ -23,7 +23,6 @@ class NeuralNetwork(nn.Module):
         return logits
 
 
-
 class VGGNet(nn.Module):
 
     def __init__(self, device ='cpu'):
@@ -31,7 +30,7 @@ class VGGNet(nn.Module):
 
         self.model = torchvision.models.vgg19(pretrained=True).to(device)
 
-        #freeze all but last layer
+        # freeze all but last layer
         last_layer_idx = 34
         for layer in list(self.model.features.children())[:last_layer_idx]:
             for param in layer.parameters():
@@ -49,6 +48,7 @@ class VGGNet(nn.Module):
 
     def forward(self, x):
         return self.model(x).squeeze()
+
 
 class ResNet18(nn.Module):
 

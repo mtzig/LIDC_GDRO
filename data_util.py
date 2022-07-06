@@ -1,6 +1,6 @@
 import torch
 from sklearn.preprocessing import StandardScaler
-from datasets import NoduleDataset
+from datasets import NoduleDataset, SubclassedNoduleDataset
 from dataloaders import InfiniteDataLoader, SubtypedDataLoader
 
 id_name = 'noduleID'
@@ -21,9 +21,11 @@ feature_names = ['Area', 'ConvexArea', 'Perimeter', 'ConvexPerimeter', 'EquivDia
                  'Entropy', 'x_3rdordermoment', 'Inversevariance', 'Sumaverage',
                  'Variance', 'Clustertendency']
 label_name = 'malignancy'
+subclass_label_name = 'subgroup'
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-def preprocess_data(df):
+
+def preprocess_data(df, subtype_df):
     # select features and labels
     df = df.loc[:, [id_name, *feature_names, label_name]]
 
@@ -32,6 +34,9 @@ def preprocess_data(df):
 
     # binarize the remaining malignancy [1,2] -> 0, [4,5] -> 1
     df[label_name] = [int(m - 3 > 0) for m in df[label_name]]
+
+    # add subclass data
+    df[subclass_label_name] = subtype_df[subclass_label_name]
 
     # normalize numeric features
     df.loc[:, feature_names] = StandardScaler().fit_transform(df.loc[:, feature_names].values)
@@ -43,15 +48,16 @@ def split_to_tensors(df):
     # tensorify
     data = torch.FloatTensor(df.loc[:, feature_names].values).to(device)
     labels = torch.LongTensor(df.loc[:, label_name].values).to(device)
+    subclass_labels = torch.LongTensor(df.loc[:, subclass_label_name].values).to(device)
 
-    return data, labels
+    return data, labels, subclass_labels
 
 
 def create_dataloader(df, batch_size):
-    data, labels = split_to_tensors(df)
+    data, labels, subclass_labels = split_to_tensors(df)
 
     # wrap with dataset and dataloader
-    dataloader = InfiniteDataLoader(NoduleDataset(data, labels), batch_size=batch_size)
+    dataloader = InfiniteDataLoader(SubclassedNoduleDataset(data, labels, subclass_labels), batch_size=batch_size)
 
     return dataloader
 
@@ -71,7 +77,7 @@ def create_subtyped_dataloader(df, subtype_df, batch_size, proportional):
     # separate into training and test sets
     subtype_data = []
     for subtype in subtype_dfs:
-        data, labels = split_to_tensors(subtype)
+        data, labels, _ = split_to_tensors(subtype)
         subtype_data.append((data, labels))
 
     # wrap with dataset and dataloader
