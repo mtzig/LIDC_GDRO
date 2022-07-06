@@ -2,12 +2,11 @@ import torch
 
 
 class GDROLoss:
-    def __init__(self, model, loss_fn, hparams, normalize_loss=False):
+    def __init__(self, model, loss_fn, hparams):
         self.model = model
         self.loss_fn = loss_fn
         self.q = torch.tensor([])
         self.eta = hparams["groupdro_eta"]
-        self.normalize_loss = normalize_loss
 
     def __call__(self, minibatch):
         # minibatch contains n batches of data where n is the number of subtypes
@@ -28,10 +27,8 @@ class GDROLoss:
             X, y = minibatch[m]
             losses[m] = self.loss_fn(self.model(X), y)
 
-            if self.normalize_loss:
-                losses[m] *= subgroup_batch_sizes[m] / total_samples
-            #if self.model.training:
-                #self.q[m] *= torch.exp((self.hparams["groupdro_eta"] * losses[m].data))
+
+
 
         if self.model.training:
             self.q *= torch.exp(self.eta * losses.data) #vectorized (might not work)
@@ -49,13 +46,12 @@ class GDROLossAlt:
     GDROLoss function to be used with SubclassedNoduleDataset
     '''
 
-    def __init__(self, model, loss_fn, eta, num_subclasses, rescale=False):
+    def __init__(self, model, loss_fn, eta, num_subclasses):
         self.model = model
         self.loss_fn = loss_fn
         self.q = torch.tensor([])
         self.eta = eta
         self.num_subclasses = num_subclasses
-        self.rescale = rescale
 
     def __call__(self, minibatch):
         
@@ -69,18 +65,15 @@ class GDROLossAlt:
 
         losses = torch.zeros(self.num_subclasses).to(device)
 
-        subclass_counts = torch.zeros(self.num_subclasses).to(device)
-
         preds = self.model(X)
 
         # computes loss
         # get relative frequency of samples in each subclass        
         for subclass in range(self.num_subclasses):
             subclass_idx = c == subclass
-            subclass_counts[subclass] = torch.sum(subclass_idx)
 
             #only compute loss if there are actually samples in that class
-            if subclass_counts[subclass] > 0:
+            if torch.sum(subclass_idx) > 0:
               losses[subclass] = self.loss_fn(preds[subclass_idx], y[subclass_idx])
         
 
@@ -89,14 +82,8 @@ class GDROLossAlt:
             self.q *= torch.exp(self.eta * losses.data)
             self.q /= self.q.sum()
 
-        #rescale loss
-        if self.rescale:
-          losses *= subclass_counts
-          loss = torch.dot(losses, self.q)
-          loss /= batch_size
-          loss *= self.num_subclasses
-        else:
-          loss = torch.dot(losses, self.q)
+
+        loss = torch.dot(losses, self.q)
 
         return loss
 
