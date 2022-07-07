@@ -4,7 +4,7 @@ import torchvision
 import pandas as pd
 import numpy as np
 
-from dataloaders import SubtypedDataloader, InfiniteDataLoader
+from dataloaders import SubtypedDataLoader, InfiniteDataLoader
 
 def getNormed(this_array, this_min = 0, this_max = 255, set_to_int = True):
     '''
@@ -193,4 +193,4 @@ def get_SubtypedDataloaders(dataset, batch_size, num_classes=4):
         subtype_data.append((features, label))
 
 
-    return SubtypedDataloader(subtype_data, batch_size, singular=True)
+    return SubtypedDataLoader(subtype_data, batch_size, singular=True)
