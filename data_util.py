@@ -6,7 +6,7 @@ from dataloaders import InfiniteDataLoader, SubtypedDataLoader
 
 numeric_data_by_radiologist_path = 'data/LIDC_20130817_AllFeatures2D_MaxSlice_MattEdited.csv'
 max_slice_data_path = 'data/LIDC_20130817_AllFeatures2D_MaxSlicePerNodule_inLineRatings.csv'
-subtype_data_path = 'data/lidc_spic_subgrouped_radiologist.csv'
+subtype_data_path = 'data/LIDC_allradiologists_spic_subtyped.csv'
 
 id_name = 'noduleID'
 radiologist_id_name = 'RadiologistID'
@@ -28,7 +28,7 @@ numeric_feature_names = ['Area', 'ConvexArea', 'Perimeter', 'ConvexPerimeter', '
                          'Variance', 'Clustertendency']
 semantic_feature_names = ['Subtlety', 'InternalStructure', 'Calcification', 'Sphericity', 'Margin', 'Lobulation', 'Spiculation', 'Texture', 'Malignancy']
 label_name = 'Malignancy'
-subclass_label_name = 'subgroup'
+subclass_label_name = 'subtype'
 subclasses = ['unmarked_benign', 'marked_benign', 'marked_malignant', 'unmarked_malignant']
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -53,14 +53,14 @@ def preprocess_data(df, subtype_df):
     # select features and labels
     df = df.loc[:, [id_name, *numeric_feature_names, label_name]]
 
+    # add subclass data
+    df[subclass_label_name] = subtype_df[subclass_label_name]
+
     # remove malignancy = 3 or out of range 1-5
     df = df[df[label_name].isin([1, 2, 4, 5])]
 
     # binarize the remaining malignancy [1,2] -> 0, [4,5] -> 1
     df[label_name] = [int(m - 3 > 0) for m in df[label_name]]
-
-    # add subclass data
-    df[subclass_label_name] = subtype_df[subclass_label_name]
 
     # normalize numeric features
     df.loc[:, numeric_feature_names] = StandardScaler().fit_transform(df.loc[:, numeric_feature_names].values)
