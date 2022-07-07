@@ -4,6 +4,8 @@ import torchvision
 import pandas as pd
 import numpy as np
 
+from dataloaders import SubtypedDataloaders, InfiniteDataLoader
+
 def getNormed(this_array, this_min = 0, this_max = 255, set_to_int = True):
     '''
         INPUTS:
@@ -167,3 +169,28 @@ def getImages(image_folder='./LIDC(MaxSlices)_Nodules(fixed)',
 
 
     return (train_img, train_label, train_subclasses), (test_img, test_label, test_subclasses)
+
+
+def get_train_val_split(dataset, split_percent=0.8):
+
+    train_size = int(split_percent * len(dataset))
+    val_size = len(dataset) - train_size
+    return torch.utils.data.random_split(train_dataset, (train_size,val_size))
+
+def get_SubtypedDataloaders(dataset, batch_size, num_classes=4):
+    subtype_data = []
+
+    #inefficient way to get data from dataset
+    loader = InfiniteDataLoader(dataset, batch_size=len(dataset))
+
+    X, y, c = next(loader)
+    for subclass in range(num_classes):
+        subclass_idx = subclass == c
+
+        features = X[subclass_idx].tolist()
+        label = y[subclass_idx][0]
+
+        subtype_data.append((features, label))
+
+
+    return SubtypedDataloaders(subtype_data, batch_size, singular=True)
