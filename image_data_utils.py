@@ -1,7 +1,8 @@
 import os
 import torch
+import torchvision
 import pandas as pd
-
+import numpy as np
 
 def getNormed(this_array, this_min = 0, this_max = 255, set_to_int = True):
     '''
@@ -47,7 +48,7 @@ def scaleImage(image_dim, upscale_amount = None, crop_change=None):
     crop_2 = torchvision.transforms.CenterCrop(crop_2_amount)
     crop_3 = torchvision.transforms.CenterCrop(crop_3_amount)
 
-    def scalar(img):
+    def scalar(image):
         '''
             INPUTS:
             Image: normalized image of shape (1, H, W)
@@ -59,8 +60,8 @@ def scaleImage(image_dim, upscale_amount = None, crop_change=None):
         '''
         
         img_ch1 = upscale(crop_1(image))
-        img_ch2 = upscale(crop_2(image_normed))
-        img_ch3 = upscale(crop_3(image_normed))
+        img_ch2 = upscale(crop_2(image))
+        img_ch3 = upscale(crop_3(image))
         image = torch.cat([img_ch1,img_ch2,img_ch3])
 
         return image
@@ -74,7 +75,7 @@ def get_malignancy(lidc_df, nodule_id, device):
 
 def get_subtype(lidc_df, nodule_id, device):
 
-    subtype = lidc_df[lidc_df['noduleID']==temp_nodule_ID]['subgroup'].iloc[0]
+    subtype = lidc_df[lidc_df['noduleID']==nodule_id]['subgroup'].iloc[0]
     
     if subtype == 'marked_benign':
         return torch.tensor(0, device=device)
@@ -106,7 +107,7 @@ def augmentImage(image):
 
     return image, image_90, image_180, image_270, image_f
 
-def getImages(image_folder, 
+def getImages(image_folder='./LIDC(MaxSlices)_Nodules(fixed)', 
               data_split_file = './data/lidc_train_test_split_stratified.csv', 
               lidc_subgroup_file='./data/lidc_spic_subgrouped.csv',
               image_dim = 71,
@@ -129,8 +130,8 @@ def getImages(image_folder,
     test_label = []
     test_subclasses = []
 
-    lidc = pd.read_csv(train_test)
-    train_test = pd.read_csv(lidc_subgroup_file)
+    lidc = pd.read_csv(lidc_subgroup_file)
+    train_test = pd.read_csv(data_split_file)
     
     scalar = scaleImage(image_dim)
 
@@ -150,7 +151,7 @@ def getImages(image_folder,
             
             
             image_raw = np.loadtxt(os.path.join(image_folder, dir1,file))
-            image_raw = torch.from_numpy(image).to(device)
+            image_raw = torch.from_numpy(image_raw).to(device)
             image_normed = getNormed(image_raw).unsqueeze(dim=0)
             image = scalar(image_normed)
 
