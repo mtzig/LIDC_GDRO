@@ -175,7 +175,7 @@ def get_train_val_split(dataset, split_percent=0.8):
 
     train_size = int(split_percent * len(dataset))
     val_size = len(dataset) - train_size
-    return torch.utils.data.random_split(train_dataset, (train_size,val_size))
+    return torch.utils.data.random_split(dataset, (train_size,val_size))
 
 def get_SubtypedDataloaders(dataset, batch_size, num_classes=4):
     subtype_data = []
