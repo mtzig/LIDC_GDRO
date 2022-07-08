@@ -187,7 +187,7 @@ def get_SubtypedDataloaders(dataset, batch_size, num_classes=4):
     for subclass in range(num_classes):
         subclass_idx = subclass == c
 
-        features = X[subclass_idx].tolist()
+        features = torch.unbind(X[subclass_idx])
         label = y[subclass_idx][0]
 
         subtype_data.append((features, label))
