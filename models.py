@@ -80,4 +80,32 @@ class ResNet18(nn.Module):
         return self.model(x).squeeze()
 
 
-   
+
+class TransferModel(nn.Module):
+
+    def __init__(self, device='cpu', pretrained=True, freeze=True):
+        super(testModel, self).__init__()
+
+        self.model = torchvision.models.resnet18(pretrained=pretrained).to(device)
+        
+        if freeze:
+            for param in self.model.parameters():
+                param.requires_grad = False
+
+
+            # for param in self.model.layer4.parameters():
+            #     param.requires_grad = True
+
+        self.model.fc = nn.Sequential(
+          nn.Linear(in_features=512, out_features=36, bias=True, device=device),
+          nn.ReLU(inplace=True),
+          nn.Dropout(p=0.5, inplace=False),
+          nn.Linear(in_features=36, out_features=2, bias=True, device=device)
+        )
+
+        for layer in self.model.fc:
+            if hasattr(layer, 'weight'):
+                nn.init.xavier_uniform_(layer.weight)
+
+    def forward(self, x):
+        return self.model(x).squeeze()
