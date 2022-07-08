@@ -171,13 +171,13 @@ def getImages(image_folder='./LIDC(MaxSlices)_Nodules(fixed)',
     return (train_img, train_label, train_subclasses), (test_img, test_label, test_subclasses)
 
 
-def get_train_val_split(dataset, split_percent=0.8):
+def getTrainValSplit(dataset, split_percent=0.8):
 
     train_size = int(split_percent * len(dataset))
     val_size = len(dataset) - train_size
     return torch.utils.data.random_split(dataset, (train_size,val_size))
 
-def get_SubtypedDataloaders(dataset, batch_size, num_classes=4):
+def getSubtypedDataloaders(dataset, batch_size, num_classes=4):
     subtype_data = []
 
     #inefficient way to get data from dataset
