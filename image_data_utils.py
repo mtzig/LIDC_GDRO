@@ -173,7 +173,10 @@ def getImages(image_folder='./LIDC(MaxSlices)_Nodules(fixed)',
     test_data = (test_img, test_label, test_subclasses)
 
 
-    return train_data, test_data if split else test_data
+    if split:
+      return train_data, test_data  
+    else:
+      return test_data
 
 
 def getTrainValSplit(dataset, split_percent=0.8):
