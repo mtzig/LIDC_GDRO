@@ -158,15 +158,15 @@ def getImages(image_folder='./LIDC(MaxSlices)_Nodules(fixed)',
             image_normed = getNormed(image_raw).unsqueeze(dim=0)
             image = scalar(image_normed)
 
-                if split_type == 'train' and split:
-                    images = augmentImage(image)
-                    train_img.extend(images)
-                    train_label.extend([malignancy for _ in range(len(images))])
-                    train_subclasses.extend([subtype for _ in range(len(images))])
-                else: 
-                    test_img.append(image)
-                    test_label.append(malignancy)
-                    test_subclasses.append(subtype)
+            if split_type == 'train' and split:
+                images = augmentImage(image)
+                train_img.extend(images)
+                train_label.extend([malignancy for _ in range(len(images))])
+                train_subclasses.extend([subtype for _ in range(len(images))])
+            else: 
+                test_img.append(image)
+                test_label.append(malignancy)
+                test_subclasses.append(subtype)
 
 
     train_data = (train_img, train_label, train_subclasses)
