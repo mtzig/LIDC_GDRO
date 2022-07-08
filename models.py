@@ -84,7 +84,7 @@ class ResNet18(nn.Module):
 class TransferModel(nn.Module):
 
     def __init__(self, device='cpu', pretrained=True, freeze=True):
-        super(testModel, self).__init__()
+        super(TransferModel, self).__init__()
 
         self.model = torchvision.models.resnet18(pretrained=pretrained).to(device)
         
