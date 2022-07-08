@@ -113,6 +113,7 @@ def getImages(image_folder='./LIDC(MaxSlices)_Nodules(fixed)',
               data_split_file = './data/lidc_train_test_split_stratified.csv', 
               lidc_subgroup_file='./data/lidc_spic_subgrouped.csv',
               image_dim = 71,
+              split = True,
               device='cpu'):
     '''
         Input:
@@ -157,18 +158,22 @@ def getImages(image_folder='./LIDC(MaxSlices)_Nodules(fixed)',
             image_normed = getNormed(image_raw).unsqueeze(dim=0)
             image = scalar(image_normed)
 
-            if split_type == 'train':
-                images = augmentImage(image)
-                train_img.extend(images)
-                train_label.extend([malignancy for _ in range(len(images))])
-                train_subclasses.extend([subtype for _ in range(len(images))])
-            else: 
-                test_img.append(image)
-                test_label.append(malignancy)
-                test_subclasses.append(subtype)
+                if split_type == 'train' and split:
+                    images = augmentImage(image)
+                    train_img.extend(images)
+                    train_label.extend([malignancy for _ in range(len(images))])
+                    train_subclasses.extend([subtype for _ in range(len(images))])
+                else: 
+                    test_img.append(image)
+                    test_label.append(malignancy)
+                    test_subclasses.append(subtype)
 
 
-    return (train_img, train_label, train_subclasses), (test_img, test_label, test_subclasses)
+    train_data = (train_img, train_label, train_subclasses)
+    test_data = (test_img, test_label, test_subclasses)
+
+
+    return train_data, test_data if split else test_data
 
 
 def getTrainValSplit(dataset, split_percent=0.8):
