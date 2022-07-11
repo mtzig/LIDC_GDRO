@@ -89,6 +89,7 @@ class GDROLossAlt:
             losses *= subclass_counts
             loss = torch.dot(losses, self.q)
             loss /= batch_size
+            loss *= self.num_subclasses
         else:
             loss = torch.dot(losses, self.q)
 
@@ -123,9 +124,6 @@ class ERMGDROLoss:
         self.erm = ERMLoss(model, loss_fn, hparams, subclassed=subclassed)
         self.gdro = GDROLossAlt(model, loss_fn, hparams, num_subclasses=num_subclasses, normalize_loss=normalize_loss)
 
-        # used to record the initial loss to set a baseline for the interpolation
-        self.initial_loss = 0
-
     def __call__(self, minibatch):
 
         # linearly interpolate between ERM and GDRO loss functions
@@ -138,5 +136,34 @@ class ERMGDROLoss:
             loss = self.erm(minibatch)
         else:
             loss = self.t * self.erm(minibatch) + (1 - self.t) * self.gdro(minibatch)
+
+        return loss
+
+
+class DynamicERMGDROLoss:
+    def __init__(self, model, loss_fn, gdro_eta, mix_eta, num_subclasses, normalize_loss=False, subclassed=False):
+        self.ermgdro = ERMGDROLoss(model, loss_fn, gdro_eta, num_subclasses, normalize_loss, subclassed)
+        self.mix_eta = mix_eta
+        self.q = torch.tensor([])
+        self.model = model
+
+    def __call__(self, minibatch):
+        X, _, _ = minibatch
+        device = X.device
+
+        if len(self.q) == 0:
+            self.q = torch.tensor([0.5, 0.5]).to(device)
+
+        erm_loss = self.ermgdro.erm(minibatch)
+        gdro_loss = self.ermgdro.gdro(minibatch)
+        losses = torch.zeros(2).to(device)
+        losses[0] = erm_loss
+        losses[1] = gdro_loss
+
+        if self.model.training:
+            self.q *= torch.exp(self.mix_eta * losses.data)
+            self.q /= self.q.sum()
+
+        loss = torch.dot(self.q, losses)
 
         return loss

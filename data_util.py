@@ -1,11 +1,13 @@
+import numpy as np
 import pandas as pd
 import torch
 from sklearn.preprocessing import StandardScaler
 from datasets import SubclassedNoduleDataset
 from dataloaders import InfiniteDataLoader, SubtypedDataLoader
 
-numeric_data_by_radiologist_path = 'data/LIDC_20130817_AllFeatures2D_MaxSlice_MattEdited.csv'
-max_slice_data_path = 'data/LIDC_20130817_AllFeatures2D_MaxSlicePerNodule_inLineRatings.csv'
+# numeric_data_by_radiologist_path = 'data/LIDC_20130817_AllFeatures2D_MaxSlice_MattEdited.csv'
+numeric_data_path = 'data/LIDC_20130817_AllFeatures2D_MaxSlicePerNodule_inLineRatings.csv'
+# max_slice_data_path = 'data/LIDC_20130817_AllFeatures2D_MaxSlicePerNodule_inLineRatings.csv'
 subtype_data_path = 'data/LIDC_allradiologists_spic_subtyped.csv'
 
 id_name = 'noduleID'
@@ -26,6 +28,7 @@ numeric_feature_names = ['Area', 'ConvexArea', 'Perimeter', 'ConvexPerimeter', '
                          'gaborSD_3_2', 'Contrast', 'Correlation', 'Energy', 'Homogeneity',
                          'Entropy', 'x_3rdordermoment', 'Inversevariance', 'Sumaverage',
                          'Variance', 'Clustertendency']
+numeric_feature_names += [f'CNN_{n}' for n in range(1, 37)]
 semantic_feature_names = ['Subtlety', 'InternalStructure', 'Calcification', 'Sphericity', 'Margin', 'Lobulation', 'Spiculation', 'Texture', 'Malignancy']
 label_name = 'Malignancy'
 subclass_label_name = 'subtype'
@@ -34,27 +37,29 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 def load_data():
-    df = pd.read_csv(numeric_data_by_radiologist_path)
-    max_slice_df = pd.read_csv(max_slice_data_path)
-    max_slice_df.index = max_slice_df[id_name]
+    df = pd.read_csv(numeric_data_path)
+    # max_slice_df = pd.read_csv(max_slice_data_path)
+    # max_slice_df.index = max_slice_df[id_name]
 
     subtype_df = pd.read_csv(subtype_data_path)
 
     # attach malignancy features to the numeric feature dataframe
-    for instance in df.index:
-        nodule_id = df.at[instance, id_name]
-        radiologist = df.at[instance, radiologist_id_name]
-        df.at[instance, label_name] = max_slice_df.at[nodule_id, label_name + f'_{radiologist}']
+    # for instance in df.index:
+    #     nodule_id = df.at[instance, id_name]
+    #     radiologist = df.at[instance, radiologist_id_name]
+    #     df.at[instance, label_name] = max_slice_df.at[nodule_id, label_name + f'_{radiologist}']
 
     return df, subtype_df
 
 
 def preprocess_data(df, subtype_df):
     # select features and labels
-    df = df.loc[:, [id_name, *numeric_feature_names, label_name]]
+    df = df.loc[:, [id_name, radiologist_id_name, *numeric_feature_names, label_name]]
 
     # add subclass data
-    df[subclass_label_name] = subtype_df[subclass_label_name]
+    df[subclass_label_name] = np.empty(len(df))
+    for i in df.index:
+        df.at[i, subclass_label_name] = subtype_df[(subtype_df[id_name] == df.at[i, id_name]) & (subtype_df[radiologist_id_name] == df.at[i, radiologist_id_name])].loc[:, subclass_label_name].item()
 
     # remove malignancy = 3 or out of range 1-5
     df = df[df[label_name].isin([1, 2, 4, 5])]
