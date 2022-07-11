@@ -110,8 +110,8 @@ def augmentImage(image):
     return image, image_90, image_180, image_270, image_f
 
 def getImages(image_folder='./LIDC(MaxSlices)_Nodules(fixed)', 
-              data_split_file = './data/lidc_train_test_split_stratified.csv', 
-              lidc_subgroup_file='./data/lidc_spic_subgrouped.csv',
+              data_split_file = './data/LIDC_train_test_split_stratified.csv',
+              lidc_subgroup_file='./data/LIDC_spic_subgrouped.csv',
               image_dim = 71,
               split = True,
               device='cpu'):
