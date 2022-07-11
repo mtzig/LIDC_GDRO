@@ -83,7 +83,7 @@ class ResNet18(nn.Module):
 
 class TransferModel(nn.Module):
 
-    def __init__(self, device='cpu', pretrained=True, freeze=True):
+    def __init__(self, pretrained=True, freeze=True, binary = True, device='cpu'):
         super(TransferModel, self).__init__()
 
         self.model = torchvision.models.resnet18(pretrained=pretrained).to(device)
@@ -95,12 +95,13 @@ class TransferModel(nn.Module):
 
             # for param in self.model.layer4.parameters():
             #     param.requires_grad = True
-
+        
+        out_feats = 2 if binary else 4
         self.model.fc = nn.Sequential(
           nn.Linear(in_features=512, out_features=36, bias=True, device=device),
           nn.ReLU(inplace=True),
           nn.Dropout(p=0.5, inplace=False),
-          nn.Linear(in_features=36, out_features=2, bias=True, device=device)
+          nn.Linear(in_features=36, out_features=out_feats, bias=True, device=device)
         )
 
         for layer in self.model.fc:
