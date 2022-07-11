@@ -8,7 +8,7 @@ from dataloaders import InfiniteDataLoader, SubtypedDataLoader
 # numeric_data_by_radiologist_path = 'data/LIDC_20130817_AllFeatures2D_MaxSlice_MattEdited.csv'
 numeric_data_path = 'data/LIDC_20130817_AllFeatures2D_MaxSlicePerNodule_inLineRatings.csv'
 # max_slice_data_path = 'data/LIDC_20130817_AllFeatures2D_MaxSlicePerNodule_inLineRatings.csv'
-subtype_data_path = 'data/LIDC_allradiologists_spic_subtyped.csv'
+subtype_data_path = 'data/LIDC_spic_subgrouped.csv'
 
 id_name = 'noduleID'
 radiologist_id_name = 'RadiologistID'
@@ -28,10 +28,10 @@ numeric_feature_names = ['Area', 'ConvexArea', 'Perimeter', 'ConvexPerimeter', '
                          'gaborSD_3_2', 'Contrast', 'Correlation', 'Energy', 'Homogeneity',
                          'Entropy', 'x_3rdordermoment', 'Inversevariance', 'Sumaverage',
                          'Variance', 'Clustertendency']
-numeric_feature_names += [f'CNN_{n}' for n in range(1, 37)]
-semantic_feature_names = ['Subtlety', 'InternalStructure', 'Calcification', 'Sphericity', 'Margin', 'Lobulation', 'Spiculation', 'Texture', 'Malignancy']
-label_name = 'Malignancy'
-subclass_label_name = 'subtype'
+# numeric_feature_names += [f'CNN_{n}' for n in range(1, 37)]
+semantic_feature_names = ['subtlety', 'internalStructure', 'calcification', 'sphericity', 'margin', 'lobulation', 'spiculation', 'texture', 'malignancy']
+label_name = 'malignancy'
+subclass_label_name = 'subgroup'
 subclasses = ['unmarked_benign', 'marked_benign', 'marked_malignant', 'unmarked_malignant']
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -54,12 +54,16 @@ def load_data():
 
 def preprocess_data(df, subtype_df):
     # select features and labels
-    df = df.loc[:, [id_name, radiologist_id_name, *numeric_feature_names, label_name]]
+    df = df.loc[:, [id_name, *numeric_feature_names, label_name]]
 
     # add subclass data
     df[subclass_label_name] = np.empty(len(df))
+    subtype_df.index = subtype_df[id_name].values
+
+    df = df[df[id_name].isin(subtype_df[id_name])]
+
     for i in df.index:
-        df.at[i, subclass_label_name] = subtype_df[(subtype_df[id_name] == df.at[i, id_name]) & (subtype_df[radiologist_id_name] == df.at[i, radiologist_id_name])].loc[:, subclass_label_name].item()
+        df.at[i, subclass_label_name] = subtype_df.at[df.at[i, id_name], subclass_label_name]
 
     # remove malignancy = 3 or out of range 1-5
     df = df[df[label_name].isin([1, 2, 4, 5])]
