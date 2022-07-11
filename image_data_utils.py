@@ -133,6 +133,8 @@ def getImages(image_folder='./LIDC(MaxSlices)_Nodules(fixed)',
     test_label = []
     test_subclasses = []
 
+    nodule_id = []
+
     lidc = pd.read_csv(lidc_subgroup_file)
     train_test = pd.read_csv(data_split_file)
     
@@ -168,6 +170,8 @@ def getImages(image_folder='./LIDC(MaxSlices)_Nodules(fixed)',
                 test_label.append(malignancy)
                 test_subclasses.append(subtype)
 
+                nodule_id.append(temp_nodule_ID)
+
 
     train_data = (train_img, train_label, train_subclasses)
     test_data = (test_img, test_label, test_subclasses)
@@ -176,7 +180,7 @@ def getImages(image_folder='./LIDC(MaxSlices)_Nodules(fixed)',
     if split:
       return train_data, test_data  
     else:
-      return test_data
+      return nodule_id, test_data
 
 
 def getTrainValSplit(dataset, split_percent=0.8):
