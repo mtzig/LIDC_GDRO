@@ -36,7 +36,7 @@ subclasses = ['unmarked_benign', 'marked_benign', 'marked_malignant', 'unmarked_
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
-def load_data():
+def load_lidc():
     df = pd.read_csv(numeric_data_path)
     # max_slice_df = pd.read_csv(max_slice_data_path)
     # max_slice_df.index = max_slice_df[id_name]
@@ -87,11 +87,14 @@ def split_to_tensors(df):
     return data, labels, subclass_labels
 
 
-def create_dataloader(df, batch_size):
-    data, labels, subclass_labels = split_to_tensors(df)
+def create_dataloader(data, batch_size, is_dataframe=True):
+    if is_dataframe:
+        X, y, c = split_to_tensors(data)
+    else:
+        X, y, c = data
 
     # wrap with dataset and dataloader
-    dataloader = InfiniteDataLoader(SubclassedNoduleDataset(data, labels, subclass_labels), batch_size=batch_size)
+    dataloader = InfiniteDataLoader(SubclassedNoduleDataset(X, y, c), batch_size=batch_size)
 
     return dataloader
 

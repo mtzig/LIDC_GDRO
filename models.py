@@ -80,7 +80,6 @@ class ResNet18(nn.Module):
         return self.model(x).squeeze()
 
 
-
 class TransferModel(nn.Module):
 
     def __init__(self, device='cpu', pretrained=True, freeze=True):

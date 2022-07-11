@@ -30,6 +30,7 @@ class NoduleDataset(Dataset):
         label = self.labels if self.singular else self.labels[idx]
         return self.features[idx], label
 
+
 class SubclassedNoduleDataset(Dataset):
 
     def __init__(self, features, labels, subclasses,):

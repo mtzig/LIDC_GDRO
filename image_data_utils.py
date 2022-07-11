@@ -6,7 +6,8 @@ import numpy as np
 
 from dataloaders import SubtypedDataLoader, InfiniteDataLoader
 
-def getNormed(this_array, this_min = 0, this_max = 255, set_to_int = True):
+
+def getNormed(this_array, this_min=0, this_max=255, set_to_int=True):
     '''
         INPUTS:
         this_array: raw image from file
@@ -15,16 +16,16 @@ def getNormed(this_array, this_min = 0, this_max = 255, set_to_int = True):
         normalized version of image
     '''
 
-    
-    rat = (this_max - this_min)/(this_array.max() - this_array.min())
+    rat = (this_max - this_min) / (this_array.max() - this_array.min())
     this_array = this_array * rat
     this_array -= this_array.min()
     this_array += this_min
     if set_to_int:
-        return this_array.to(dtype= torch.int) / this_max
+        return this_array.to(dtype=torch.int) / this_max
     return this_array / this_max
 
-def scaleImage(image_dim, upscale_amount = None, crop_change=None):
+
+def scaleImage(image_dim, upscale_amount=None, crop_change=None):
     '''
         INPUTS:
         upscale_amount: amount to upscale image by, if None, upscales
@@ -43,7 +44,7 @@ def scaleImage(image_dim, upscale_amount = None, crop_change=None):
 
     crop_1_amount = image_dim
     crop_2_amount = image_dim - crop_change
-    crop_3_amount = image_dim - 2*crop_change
+    crop_3_amount = image_dim - 2 * crop_change
 
     upscale = torchvision.transforms.Resize(upscale_amount)
     crop_1 = torchvision.transforms.CenterCrop(crop_1_amount)
@@ -60,28 +61,29 @@ def scaleImage(image_dim, upscale_amount = None, crop_change=None):
                           image, shape of (3, H, W)
 
         '''
-        
+
         img_ch1 = upscale(crop_1(image))
         img_ch2 = upscale(crop_2(image))
         img_ch3 = upscale(crop_3(image))
-        image = torch.cat([img_ch1,img_ch2,img_ch3])
+        image = torch.cat([img_ch1, img_ch2, img_ch3])
 
         return image
 
     return scalar
 
-def get_malignancy(lidc_df, nodule_id, binary, device):
 
-    malignancy = lidc_df[lidc_df['noduleID']==nodule_id]['malignancy'].iloc[0]
+def get_malignancy(lidc_df, nodule_id, binary, device):
+    malignancy = lidc_df[lidc_df['noduleID'] == nodule_id]['malignancy'].iloc[0]
     if binary:
         return torch.tensor(1, device=device) if malignancy > 3 else torch.tensor(0, device=device)
-    
-    retrun torch.tensor(malignancy-2, device=device) if malignancy > 3 else torch.tensor(malignancy-1, device=device)
+
+    return torch.tensor(malignancy - 2, device=device) if malignancy > 3 else torch.tensor(malignancy - 1,
+                                                                                           device=device)
+
 
 def get_subtype(lidc_df, nodule_id, device):
+    subtype = lidc_df[lidc_df['noduleID'] == nodule_id]['subgroup'].iloc[0]
 
-    subtype = lidc_df[lidc_df['noduleID']==nodule_id]['subgroup'].iloc[0]
-    
     if subtype == 'marked_benign':
         return torch.tensor(0, device=device)
     elif subtype == 'unmarked_benign':
@@ -91,9 +93,10 @@ def get_subtype(lidc_df, nodule_id, device):
     else:
         return torch.tensor(3, device=device)
 
-def get_data_split(train_test_df, nodule_id, device):      
 
-    return train_test_df[train_test_df['noduleID'] ==nodule_id]['dataset'].iloc[0]
+def get_data_split(train_test_df, nodule_id, device):
+    return train_test_df[train_test_df['noduleID'] == nodule_id]['dataset'].iloc[0]
+
 
 def augmentImage(image):
     '''
@@ -108,15 +111,16 @@ def augmentImage(image):
     image_90 = torchvision.transforms.functional.rotate(image, 90)
     image_180 = torchvision.transforms.functional.rotate(image, 180)
     image_270 = torchvision.transforms.functional.rotate(image, 270)
-    image_f = torch.flip(image, [0,1]) #flip along x-axis
+    image_f = torch.flip(image, [0, 1])  # flip along x-axis
 
     return image, image_90, image_180, image_270, image_f
 
-def getImages(image_folder='./LIDC(MaxSlices)_Nodules(fixed)', 
-              data_split_file = './data/LIDC_train_test_split_stratified.csv',
+
+def getImages(image_folder='./LIDC(MaxSlices)_Nodules(fixed)',
+              data_split_file='./data/LIDC_train_test_split_stratified.csv',
               lidc_subgroup_file='./data/LIDC_spic_subgrouped.csv',
-              image_dim = 71,
-              split = True,
+              image_dim=71,
+              split=True,
               binary=True,
               device='cpu'):
     '''
@@ -141,11 +145,11 @@ def getImages(image_folder='./LIDC(MaxSlices)_Nodules(fixed)',
 
     lidc = pd.read_csv(lidc_subgroup_file)
     train_test = pd.read_csv(data_split_file)
-    
+
     scalar = scaleImage(image_dim)
 
     for dir1 in os.listdir(image_folder):
-  
+
         if dir1 == 'Malignancy_3':
             continue
 
@@ -155,11 +159,9 @@ def getImages(image_folder='./LIDC(MaxSlices)_Nodules(fixed)',
             malignancy = get_malignancy(lidc, temp_nodule_ID, binary, device)
             subtype = get_subtype(lidc, temp_nodule_ID, device)
 
-
             split_type = get_data_split(train_test, temp_nodule_ID, device)
-            
-            
-            image_raw = np.loadtxt(os.path.join(image_folder, dir1,file))
+
+            image_raw = np.loadtxt(os.path.join(image_folder, dir1, file))
             image_raw = torch.from_numpy(image_raw).to(device)
             image_normed = getNormed(image_raw).unsqueeze(dim=0)
             image = scalar(image_normed)
@@ -169,34 +171,32 @@ def getImages(image_folder='./LIDC(MaxSlices)_Nodules(fixed)',
                 train_img.extend(images)
                 train_label.extend([malignancy for _ in range(len(images))])
                 train_subclasses.extend([subtype for _ in range(len(images))])
-            else: 
+            else:
                 test_img.append(image)
                 test_label.append(malignancy)
                 test_subclasses.append(subtype)
 
                 nodule_id.append(temp_nodule_ID)
 
-
     train_data = (train_img, train_label, train_subclasses)
     test_data = (test_img, test_label, test_subclasses)
 
-
     if split:
-      return train_data, test_data  
+        return train_data, test_data
     else:
-      return nodule_id, test_data
+        return nodule_id, test_data
 
 
 def getTrainValSplit(dataset, split_percent=0.8):
-
     train_size = int(split_percent * len(dataset))
     val_size = len(dataset) - train_size
-    return torch.utils.data.random_split(dataset, (train_size,val_size))
+    return torch.utils.data.random_split(dataset, (train_size, val_size))
+
 
 def getSubtypedDataLoader(dataset, batch_size, num_classes=4):
     subtype_data = []
 
-    #inefficient way to get data from dataset
+    # inefficient way to get data from dataset
     loader = InfiniteDataLoader(dataset, batch_size=len(dataset))
 
     X, y, c = next(loader)
@@ -207,6 +207,5 @@ def getSubtypedDataLoader(dataset, batch_size, num_classes=4):
         label = y[subclass_idx][0]
 
         subtype_data.append((features, label))
-
 
     return SubtypedDataLoader(subtype_data, batch_size, singular=True)
