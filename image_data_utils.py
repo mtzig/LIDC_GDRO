@@ -70,10 +70,13 @@ def scaleImage(image_dim, upscale_amount = None, crop_change=None):
 
     return scalar
 
-def get_malignancy(lidc_df, nodule_id, device):
+def get_malignancy(lidc_df, nodule_id, binary, device):
 
     malignancy = lidc_df[lidc_df['noduleID']==nodule_id]['malignancy'].iloc[0]
-    return torch.tensor(1, device=device) if malignancy > 3 else torch.tensor(0, device=device)
+    if binary:
+        return torch.tensor(1, device=device) if malignancy > 3 else torch.tensor(0, device=device)
+    
+    retrun torch.tensor(malignancy-2, device=device) if malignancy > 3 else torch.tensor(malignancy-1, device=device)
 
 def get_subtype(lidc_df, nodule_id, device):
 
@@ -114,6 +117,7 @@ def getImages(image_folder='./LIDC(MaxSlices)_Nodules(fixed)',
               lidc_subgroup_file='./data/LIDC_spic_subgrouped.csv',
               image_dim = 71,
               split = True,
+              binary=True,
               device='cpu'):
     '''
         Input:
@@ -148,7 +152,7 @@ def getImages(image_folder='./LIDC(MaxSlices)_Nodules(fixed)',
         for file in os.listdir(os.path.join(image_folder, dir1)):
 
             temp_nodule_ID = int(file.split('.')[0])
-            malignancy = get_malignancy(lidc, temp_nodule_ID, device)
+            malignancy = get_malignancy(lidc, temp_nodule_ID, binary, device)
             subtype = get_subtype(lidc, temp_nodule_ID, device)
 
 
