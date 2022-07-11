@@ -1,4 +1,4 @@
-Subtlety,InternalStructure,Calcification,Sphericity,Margin,Lobulation,Spiculation,Texture,Malignancy,noduleID
+subtlety,internalStructure,calcification,sphericity,margin,lobulation,spiculation,texture,malignancy,noduleID
 5,1.0,6.0,3,4,3,5,5,5,1
 2,1.0,6.0,4,2,1,1,2,5,2
 5,1.0,6.0,4,3,2,2,4,5,3
