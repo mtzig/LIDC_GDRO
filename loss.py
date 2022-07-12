@@ -52,6 +52,9 @@ class GDROLossAlt:
         self.num_subclasses = num_subclasses
         self.normalize_loss = normalize_loss
 
+        # for debug purposes
+        self.losses = torch.tensor([])
+
     def __call__(self, minibatch):
         
         X, y, c = minibatch
@@ -92,6 +95,9 @@ class GDROLossAlt:
             loss *= self.num_subclasses
         else:
             loss = torch.dot(losses, self.q)
+
+        # store losses for retrieval by debug program
+        self.losses = losses
 
         return loss
 
