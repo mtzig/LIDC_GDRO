@@ -99,7 +99,7 @@ class TransferModel(nn.Module):
         self.model.fc = nn.Sequential(
           nn.Linear(in_features=512, out_features=36, bias=True, device=device),
           nn.ReLU(inplace=True),
-          nn.Dropout(p=0.5, inplace=False),
+          # nn.Dropout(p=0.5, inplace=False),
           nn.Linear(in_features=36, out_features=out_feats, bias=True, device=device)
         )
 
