@@ -75,4 +75,3 @@ def test(dataloader, model, subgrouped=True, verbose=False):
             print("Accuracy:", accuracy)
 
         return accuracy
-

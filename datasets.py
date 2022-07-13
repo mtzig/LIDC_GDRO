@@ -18,7 +18,6 @@ class NoduleDataset(Dataset):
         
         '''
 
-
         self.features = features
         self.labels = labels
         self.singular = singular
@@ -29,7 +28,7 @@ class NoduleDataset(Dataset):
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
-        
+
         label = self.labels if self.singular else self.labels[idx]
         return self.features[idx], label
 
@@ -42,14 +41,12 @@ class SubclassedNoduleDataset(Dataset):
         features: list of features (as Pytorch tensors)
         labels:   list of corresponding lables
         subclasses: list of corresponding subclasses
-        
-        '''
 
+        '''
 
         self.features = features
         self.labels = labels
         self.subclasses = subclasses
-
 
     def __len__(self):
         return len(self.features)
@@ -57,7 +54,7 @@ class SubclassedNoduleDataset(Dataset):
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
-        
+
         return self.features[idx], self.labels[idx], self.subclasses[idx]
 
 
