@@ -27,7 +27,11 @@ for malig in range(4):
 
     maligs.extend((malig,)*length)
 
-df_split = pd.DataFrame(zip(noduleID, maligs, split), columns=['noduleID', 'malignancy', 'split'])
+subgroup_2 = [m*2+s for m,s in zip(maligs, lidc['spiculation'])]
+
+df_split = pd.DataFrame(zip(noduleID, subgroup_2, maligs, split), columns=['noduleID', 'subgroup', 'malignancy', 'split'])
+
+# df_split = pd.DataFrame(zip(noduleID, maligs, maligs, split), columns=['noduleID', 'subgroup', 'malignancy', 'split'])
 df_split.to_csv('../data/LIDC_data_split.csv')
     
 
