@@ -189,16 +189,14 @@ class DynamicERMGDROLoss:
         if len(self.q) == 0:
             self.q = torch.tensor([0.5, 0.5]).to(device)
 
-        erm_loss = self.ermgdro(minibatch)[1]
-        gdro_loss = self.ermgdro(minibatch)[2]
-        losses = torch.zeros(2).to(device)
-        losses[0] = erm_loss
-        losses[1] = gdro_loss
+        losses = torch.Tensor(self.ermgdro(minibatch)[1:]).to(device)
 
         if self.model.training:
             self.q *= torch.exp(self.mix_eta * losses.data)
             self.q /= self.q.sum()
 
         loss = torch.dot(self.q, losses)
+
+        del losses
 
         return loss
