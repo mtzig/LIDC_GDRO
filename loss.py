@@ -226,13 +226,14 @@ class DynamicERMGDROLossAlt:
 
         #initialize g, q if first step
         if len(self.g) == 0: 
-            self.g = torch.tensor([1, 0], device=device)
+            self.g = torch.tensor([1, 0], device=device, dtype=torch.float32)
             self.q = torch.ones(self.num_subclasses, device=device)
         
 
         #intialize losses
         losses = torch.zeros(self.num_subclasses, device=device)
         subclass_freq = torch.zeros(self.num_subclasses, device=device)
+        ERM_GDRO_losses = torch.zeros(2, device=device)
 
         X, y, c = minibatch
         batch_size = X.shape[0]
@@ -257,16 +258,17 @@ class DynamicERMGDROLossAlt:
         #normalize loss
         losses *= subclass_freq
 
-        ERM_loss = torch.sum(losses)
+        ERM_GDRO_losses[0] = torch.sum(losses)
+        ERM_GDRO_losses[1] = torch.dot(losses,self.q) * self.num_subclasses
 
-        GDRO_loss = torch.dot(losses,self.q)
-        GDRO_loss *= self.num_subclasses
+
+
 
         #update g
         if self.model.training:
-            self.g *= torch.exp(self.mix_gamma * losses.data)
+            self.g *= torch.exp(self.mix_gamma * ERM_GDRO_losses.data)
             self.g /= torch.sum(self.g)
 
-        loss = ERM_loss * self.g[0] + GDRO_loss * self.g[1]
+        loss = torch.dot(ERM_GDRO_losses, self.g)
         
         return loss
