@@ -80,7 +80,7 @@ def get_malignancy(lidc_df, nodule_id, binary, device):
 
 def get_subtype(lidc_df, nodule_id, device):
 
-    subtype = lidc_df[lidc_df['noduleID']==nodule_id]['malignancy'].iloc[0]
+    subtype = lidc_df[lidc_df['noduleID']==nodule_id]['subgroup'].iloc[0]
     return subtype
     # if subtype == 'marked_benign':
     #     return torch.tensor(0, device=device)

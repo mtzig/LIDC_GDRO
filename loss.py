@@ -179,7 +179,7 @@ class ERMGDROLoss:
 class DynamicERMGDROLoss:
     def __init__(self, model, loss_fn, gdro_eta, mix_eta, num_subclasses):
         self.ermgdro = ERMGDROLoss(model, loss_fn, gdro_eta, num_subclasses)
-        self.mix_eta = mix_eta
+        self.mix_gamma = mix_gamma
         self.q = torch.tensor([])
         self.model = model
 
@@ -203,4 +203,70 @@ class DynamicERMGDROLoss:
 
         del losses
 
+        return loss
+
+class DynamicERMGDROLossAlt:
+    def __init__(self, model, loss_fn, gdro_eta, mix_gamma, num_subclasses):
+        
+        self.loss_fn = loss_fn
+        self.model = model
+
+        self.gdro_eta = gdro_eta
+        self.mix_gamma = mix_gamma
+
+        self.g = torch.tensor([])
+        self.q = torch.tensor([])
+
+        self.num_subclasses = num_subclasses
+
+
+    def __call__(self, minibatch):
+
+        device = minibatch[0].device
+
+        #initialize g, q if first step
+        if len(self.g) == 0: 
+            self.g = torch.tensor([1, 0], device=device)
+            self.q = torch.ones(self.num_subclasses, device=device)
+        
+
+        #intialize losses
+        losses = torch.zeros(self.num_subclasses, device=device)
+        subclass_freq = torch.zeros(self.num_subclasses, device=device)
+
+        X, y, c = minibatch
+        batch_size = X.shape[0]
+
+        preds = self.model(X)
+
+        # computes loss
+        # get relative frequency of samples in each subclass        
+        for subclass in range(self.num_subclasses):
+            subclass_idx = c == subclass
+            subclass_freq[subclass] = torch.sum(subclass_idx) / batch_size
+
+            #only compute loss if there are actually samples in that class
+            if torch.sum(subclass_idx) > 0:
+              losses[subclass] = self.loss_fn(preds[subclass_idx], y[subclass_idx])
+
+        #update q
+        if self.model.training:
+            self.q *= torch.exp(self.mix_eta * losses.data)
+            self.q /= self.q.sum()
+        
+        #normalize loss
+        losses *= subclass_freq
+
+        ERM_loss = torch.sum(losses)
+
+        GDRO_loss = torch.dot(losses,self.q)
+        GDRO_loss *= self.num_subclasses
+
+        #update g
+        if self.model.training:
+            self.g *= torch.exp(self.mix_eta * losses.data)
+            self.g /= torch.sum(self.g)
+
+        loss = ERM_loss * self.g[0] + GDRO_loss * self.g[1]
+        
         return loss
