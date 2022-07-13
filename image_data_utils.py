@@ -80,20 +80,20 @@ def get_malignancy(lidc_df, nodule_id, binary, device):
 
 def get_subtype(lidc_df, nodule_id, device):
 
-    subtype = lidc_df[lidc_df['noduleID']==nodule_id]['subgroup'].iloc[0]
-    
-    if subtype == 'marked_benign':
-        return torch.tensor(0, device=device)
-    elif subtype == 'unmarked_benign':
-        return torch.tensor(1, device=device)
-    elif subtype == 'marked_malignant':
-        return torch.tensor(2, device=device)
-    else:
-        return torch.tensor(3, device=device)
+    subtype = lidc_df[lidc_df['noduleID']==nodule_id]['malignancy'].iloc[0]
+    return subtype
+    # if subtype == 'marked_benign':
+    #     return torch.tensor(0, device=device)
+    # elif subtype == 'unmarked_benign':
+    #     return torch.tensor(1, device=device)
+    # elif subtype == 'marked_malignant':
+    #     return torch.tensor(2, device=device)
+    # else:
+    #     return torch.tensor(3, device=device)
 
 def get_data_split(train_test_df, nodule_id, device):      
 
-    return train_test_df[train_test_df['noduleID'] ==nodule_id]['dataset'].iloc[0]
+    return train_test_df[train_test_df['noduleID'] ==nodule_id]['split'].iloc[0]
 
 def augmentImage(image):
     '''
@@ -113,7 +113,7 @@ def augmentImage(image):
     return image, image_90, image_180, image_270, image_f
 
 def getImages(image_folder='./LIDC(MaxSlices)_Nodules_Subgrouped', 
-              data_split_file = './data/LIDC_train_test_split_stratified.csv',
+              data_split_file = './data/LIDC_data_split.csv',
               lidc_subgroup_file='./data/LIDC_labels_cleaned.csv',
               image_dim = 71,
               sublabels=False,
@@ -133,6 +133,10 @@ def getImages(image_folder='./LIDC(MaxSlices)_Nodules_Subgrouped',
     train_img = []
     train_label = []
     train_subclasses = []
+
+    cv_img = []
+    cv_label = []
+    cv_subclasses = []
 
     test_img = []
     test_label = []
@@ -156,7 +160,7 @@ def getImages(image_folder='./LIDC(MaxSlices)_Nodules_Subgrouped',
             malignancy = get_malignancy(lidc, temp_nodule_ID, binary, device)
 
             if sublabels:
-                subtype = get_subtype(lidc, temp_nodule_ID, device)
+                subtype = get_subtype(train_test, temp_nodule_ID, device)
 
             if split:
                 split_type = get_data_split(train_test, temp_nodule_ID, device)
@@ -167,12 +171,18 @@ def getImages(image_folder='./LIDC(MaxSlices)_Nodules_Subgrouped',
             image_normed = getNormed(image_raw).unsqueeze(dim=0)
             image = scalar(image_normed)
 
-            if split and split_type == 'train':
+            if split and split_type == 0:
                 images = augmentImage(image)
                 train_img.extend(images)
                 train_label.extend([malignancy for _ in range(len(images))])
                 if sublabels:
                     train_subclasses.extend([subtype for _ in range(len(images))])
+            elif split and split_type == 1:
+                cv_img.append(image)
+                cv_label.append(malignancy)
+
+                if sublabels:
+                    cv_subclasses.append(subtype)
             else: 
                 test_img.append(image)
                 test_label.append(malignancy)
@@ -184,14 +194,16 @@ def getImages(image_folder='./LIDC(MaxSlices)_Nodules_Subgrouped',
 
     if sublabels:
         train_data = (train_img, train_label, train_subclasses)
+        cv_data = (cv_img, cv_label, cv_subclasses)
         test_data = (test_img, test_label, test_subclasses)
     else:
         train_data = (train_img, train_label)
+        cv_data = (cv_img, cv_label)
         test_data = (test_img, test_label)
 
 
     if split:
-      return train_data, test_data  
+      return train_data, cv_data, test_data  
     else:
       return nodule_id, test_data
 
