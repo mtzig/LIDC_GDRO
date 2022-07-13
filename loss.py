@@ -271,3 +271,32 @@ class DynamicERMGDROLossAlt:
         loss = torch.dot(ERM_GDRO_losses, self.g)
 
         return loss
+
+
+class UpweightSmall:
+    def __init__(self, model, loss_fn, num_subclasses):
+        self.model = model
+        self.loss_fn = loss_fn
+        self.num_subclasses = num_subclasses
+
+    def __call__(self, minibatch):
+        X, y, c = minibatch
+
+        device = X.device
+
+        losses = torch.zeros(self.num_subclasses).to(device)
+
+        preds = self.model(X)
+
+        # computes loss
+        # get relative frequency of samples in each subclass
+        for subclass in range(self.num_subclasses):
+            subclass_idx = c == subclass
+
+            # only compute loss if there are actually samples in that class
+            if torch.sum(subclass_idx) > 0:
+                losses[subclass] = self.loss_fn(preds[subclass_idx], y[subclass_idx])
+
+        loss = torch.sum(losses)
+
+        return loss
