@@ -251,7 +251,7 @@ class DynamicERMGDROLossAlt:
 
         #update q
         if self.model.training:
-            self.q *= torch.exp(self.mix_eta * losses.data)
+            self.q *= torch.exp(self.gdro_eta * losses.data)
             self.q /= self.q.sum()
         
         #normalize loss
