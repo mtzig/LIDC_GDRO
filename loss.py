@@ -264,7 +264,7 @@ class DynamicERMGDROLossAlt:
 
         #update g
         if self.model.training:
-            self.g *= torch.exp(self.mix_eta * losses.data)
+            self.g *= torch.exp(self.mix_gamma * losses.data)
             self.g /= torch.sum(self.g)
 
         loss = ERM_loss * self.g[0] + GDRO_loss * self.g[1]
