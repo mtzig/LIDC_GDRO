@@ -82,9 +82,9 @@ def get_malignancy(lidc_df, nodule_id, binary, device):
     
     return torch.tensor(malignancy-2, device=device) if malignancy > 3 else torch.tensor(malignancy-1, device=device)
 
-def get_subtype(lidc_df, nodule_id, device):
+def get_subtype(lidc_df, nodule_id, sublabels, device):
 
-    subtype = lidc_df[lidc_df['noduleID']==nodule_id]['subgroup'].iloc[0]
+    subtype = lidc_df[lidc_df['noduleID']==nodule_id][sublabels].iloc[0]
     return subtype
     # if subtype == 'marked_benign':
     #     return torch.tensor(0, device=device)
@@ -120,7 +120,7 @@ def getImages(image_folder='./LIDC(MaxSlices)_Nodules_Subgrouped',
               data_split_file = './data/LIDC_data_split.csv',
               lidc_subgroup_file='./data/LIDC_labels_cleaned.csv',
               image_dim = 71,
-              sublabels=False,
+              sublabels=None,
               split = True,
               binary=True,
               device='cpu'):
@@ -164,7 +164,7 @@ def getImages(image_folder='./LIDC(MaxSlices)_Nodules_Subgrouped',
             malignancy = get_malignancy(lidc, temp_nodule_ID, binary, device)
 
             if sublabels:
-                subtype = get_subtype(train_test, temp_nodule_ID, device)
+                subtype = get_subtype(train_test, temp_nodule_ID, sublabels, device)
 
             if split:
                 split_type = get_data_split(train_test, temp_nodule_ID, device)
