@@ -248,7 +248,8 @@ def train_epochs(epochs, train_loader, val_loader, model, loss_fn='ERM',schedule
 
   for epoch in range(epochs):
       print(f"Epoch {epoch + 1}/{epochs}")
-      train(train_loader, model, loss_fn, optimizer, verbose=verbose)
+      
+      train(train_loader, model, loss_fn, optimizer,num_subgroups, verbose=verbose)
       accuracies = test(val_loader, model, verbose=verbose)
 
       if scheduler:
