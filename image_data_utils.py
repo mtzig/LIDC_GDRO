@@ -3,6 +3,10 @@ import torch
 import torchvision
 import pandas as pd
 import numpy as np
+from train import train, test
+from loss import ERMLoss, GDROLossAlt
+from torch.optim.lr_scheduler import ReduceLROnPlateau
+
 
 from dataloaders import SubtypedDataLoader, InfiniteDataLoader
 
@@ -231,3 +235,21 @@ def getSubtypedDataLoader(dataset, batch_size, num_classes=4):
 
 
     return SubtypedDataLoader(subtype_data, batch_size, singular=True)
+
+def train_epochs(epochs, train_loader, val_loader, model, loss_fn='ERM',scheduler=True, verbose=True):
+  if loss_fn == 'ERM':
+    loss_fn = ERMLoss(model,torch.nn.CrossEntropyLoss(),{}, subclassed=True)
+  else:
+    loss_fn = GDROLossAlt(model,torch.nn.CrossEntropyLoss(),0.5,4)
+
+  optimizer = torch.optim.Adam(model.parameters(), lr=0.0005, weight_decay=0.005)
+  if scheduler:
+    scheduler = ReduceLROnPlateau(optimizer, mode='max', factor=0.2, patience=2, verbose=True)
+
+  for epoch in range(epochs):
+      print(f"Epoch {epoch + 1}/{epochs}")
+      train(train_loader, model, loss_fn, optimizer, verbose=verbose)
+      accuracies = test(val_loader, model, verbose=verbose)
+
+      if scheduler:
+        scheduler.step(accuracies[0])
