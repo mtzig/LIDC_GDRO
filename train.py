@@ -27,11 +27,9 @@ def train(dataloader, model, loss_fn, optimizer, verbose=False):
         print("Average training loss:", avg_loss)
 
 
-def test(dataloader, model, subgrouped=True, verbose=False):
+def test(dataloader, model, num_subclasses, subgrouped=True, verbose=False):
     model.eval()
     if subgrouped:
-
-        num_subclasses = len(data_util.subclasses)
 
         steps_per_epoch = dataloader.batches_per_epoch()
 
