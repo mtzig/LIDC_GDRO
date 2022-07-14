@@ -33,7 +33,7 @@ maligs_b = list(map( lambda x:int(x>1), maligs))
 df_split = pd.DataFrame(zip(noduleID, spics, maligs, maligs_b, split), columns=['noduleID', 'spiculation', 'malignancy', 'malignancy_b', 'split'])
 
 # df_split = pd.DataFrame(zip(noduleID, maligs, maligs, split), columns=['noduleID', 'subgroup', 'malignancy', 'split'])
-df_split.sort_values('noduleID')
+df_split = df_split.sort_values('noduleID')
 df_split.to_csv('../data/LIDC_data_split.csv')
     
 
