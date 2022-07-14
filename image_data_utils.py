@@ -255,11 +255,11 @@ def train_epochs(epochs, train_loader, val_loader, model, loss_fn='ERM',schedule
         scheduler.step(accuracies[0])
 
 
-def show_scatter(component_0, component_1, group, title, size)
+def show_scatter(component_0, component_1, group, title, size):
     fig, ax = plt.subplots()
     group = group
     component_0 = component_0
-    component_1 = compnent_1
+    component_1 = component_1
     # legend = {0:'red', 1:'blue'}
 
     for g in np.unique(group):
