@@ -6,7 +6,7 @@ import numpy as np
 from train import train, test
 from loss import ERMLoss, GDROLossAlt
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-
+from matplotlib import pyplot as plt
 
 from dataloaders import SubtypedDataLoader, InfiniteDataLoader
 
@@ -253,3 +253,19 @@ def train_epochs(epochs, train_loader, val_loader, model, loss_fn='ERM',schedule
 
       if scheduler:
         scheduler.step(accuracies[0])
+
+
+def show_scatter(component_0, component_1, group, title, size)
+    fig, ax = plt.subplots()
+    group = group
+    component_0 = component_0
+    component_1 = compnent_1
+    # legend = {0:'red', 1:'blue'}
+
+    for g in np.unique(group):
+        idx = np.where(group == g)
+        ax.scatter(component_0[idx], component_1[idx],  label = g, s = size) #c = legend[g],
+
+    ax.legend()
+    plt.title(title)
+    plt.show()
