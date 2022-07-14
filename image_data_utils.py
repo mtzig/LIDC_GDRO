@@ -6,7 +6,7 @@ import numpy as np
 from train import train, test
 from loss import ERMLoss, GDROLossAlt
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-
+from matplotlib import pyplot as plt
 
 from dataloaders import SubtypedDataLoader, InfiniteDataLoader
 
@@ -82,9 +82,9 @@ def get_malignancy(lidc_df, nodule_id, binary, device):
     
     return torch.tensor(malignancy-2, device=device) if malignancy > 3 else torch.tensor(malignancy-1, device=device)
 
-def get_subtype(lidc_df, nodule_id, device):
+def get_subtype(lidc_df, nodule_id, sublabels, device):
 
-    subtype = lidc_df[lidc_df['noduleID']==nodule_id]['subgroup'].iloc[0]
+    subtype = lidc_df[lidc_df['noduleID']==nodule_id][sublabels].iloc[0]
     return subtype
     # if subtype == 'marked_benign':
     #     return torch.tensor(0, device=device)
@@ -120,7 +120,7 @@ def getImages(image_folder='./LIDC(MaxSlices)_Nodules_Subgrouped',
               data_split_file = './data/LIDC_data_split.csv',
               lidc_subgroup_file='./data/LIDC_labels_cleaned.csv',
               image_dim = 71,
-              sublabels=False,
+              sublabels=None,
               split = True,
               binary=True,
               device='cpu'):
@@ -164,7 +164,7 @@ def getImages(image_folder='./LIDC(MaxSlices)_Nodules_Subgrouped',
             malignancy = get_malignancy(lidc, temp_nodule_ID, binary, device)
 
             if sublabels:
-                subtype = get_subtype(train_test, temp_nodule_ID, device)
+                subtype = get_subtype(train_test, temp_nodule_ID, sublabels, device)
 
             if split:
                 split_type = get_data_split(train_test, temp_nodule_ID, device)
@@ -236,11 +236,11 @@ def getSubtypedDataLoader(dataset, batch_size, num_classes=4):
 
     return SubtypedDataLoader(subtype_data, batch_size, singular=True)
 
-def train_epochs(epochs, train_loader, val_loader, model, loss_fn='ERM',scheduler=True, verbose=True):
+def train_epochs(epochs, train_loader, val_loader, model, loss_fn='ERM',scheduler=True, num_subgroups=None, verbose=True):
   if loss_fn == 'ERM':
     loss_fn = ERMLoss(model,torch.nn.CrossEntropyLoss(),{}, subclassed=True)
   else:
-    loss_fn = GDROLossAlt(model,torch.nn.CrossEntropyLoss(),0.5,4)
+    loss_fn = GDROLossAlt(model,torch.nn.CrossEntropyLoss(),0.5,num_subgroups)
 
   optimizer = torch.optim.Adam(model.parameters(), lr=0.0005, weight_decay=0.005)
   if scheduler:
@@ -253,3 +253,19 @@ def train_epochs(epochs, train_loader, val_loader, model, loss_fn='ERM',schedule
 
       if scheduler:
         scheduler.step(accuracies[0])
+
+
+def show_scatter(component_0, component_1, group, title, size):
+    fig, ax = plt.subplots()
+    group = group
+    component_0 = component_0
+    component_1 = component_1
+    # legend = {0:'red', 1:'blue'}
+
+    for g in np.unique(group):
+        idx = np.where(group == g)
+        ax.scatter(component_0[idx], component_1[idx],  label = g, s = size) #c = legend[g],
+
+    ax.legend()
+    plt.title(title)
+    plt.show()
