@@ -211,6 +211,24 @@ def getImages(image_folder='./data/LIDC(MaxSlices)_Nodules_Subgrouped',
     else:
       return nodule_id, test_data
 
+def getCNNFeatures(feature_file = './data/erm_cluster_cnn_features_1.csv', split_file = './data/LIDC_data_split_with_clusters.csv', device='cpu', subclass=''):
+    df_features = pd.read_csv(feature_file, index_col=0)
+    df_splits = pd.read_csv(split_file, index_col=0)
+    df = df_features.sort_values('noduleID')
+    df['clusters'] = df_splits['spic_groups']
+
+    dfs = []
+    for i in range(3):
+        dfs.append(df[df['split']==i])
+
+    datas = []
+    for d in dfs:
+        X = torch.unbind(torch.tensor(d.drop(['noduleID','split', 'malignancy', 'malignancy_b','clusters'], axis=1).values, device=device, dtype=torch.float32))
+        y = torch.unbind(torch.tensor(d['malignancy_b'].values, device=device))
+        c = torch.unbind(torch.tensor(d['clusters'].values, device=device))
+        datas.append((X,y,c))
+
+    return datas
 
 def getTrainValSplit(dataset, split_percent=0.8):
 
