@@ -11,7 +11,6 @@ def train(dataloader, model, loss_fn, optimizer, verbose=False):
     avg_loss = 0
 
     for i in range(steps_per_epoch):
-
         loss = loss_fn(next(dataloader))
         avg_loss += loss.item()
 
@@ -42,14 +41,16 @@ def evaluate(dataloader, model, num_subclasses, verbose=False):
             for subclass in range(num_subclasses):
                 subclass_idx = c == subclass
                 num_samples[subclass] += torch.sum(subclass_idx)
-                subgroup_correct[subclass] += (pred[subclass_idx].argmax(1) == y[subclass_idx]).type(torch.float).sum().item()
+                subgroup_correct[subclass] += (pred[subclass_idx].argmax(1) == y[subclass_idx]).type(
+                    torch.float).sum().item()
 
     subgroup_accuracy = subgroup_correct / num_samples
 
-    accuracy = sum(subgroup_correct)/sum(num_samples)
+    accuracy = sum(subgroup_correct) / sum(num_samples)
 
     if verbose:
-        print("Accuracy:", accuracy, "\nAccuracy over subgroups:", subgroup_accuracy, "\nWorst Group Accuracy:", min(subgroup_accuracy))
+        print("Accuracy:", accuracy, "\nAccuracy over subgroups:", subgroup_accuracy, "\nWorst Group Accuracy:",
+              min(subgroup_accuracy))
 
     return (accuracy, *subgroup_accuracy)
 
@@ -77,6 +78,45 @@ def train_epochs(epochs,
 
         if record_accuracies:
             accuracies = evaluate(val_dataloader, model, num_subclasses=num_subclasses)
+            results.extend(accuracies)
+
+    if record_accuracies:
+        return results
+    else:
+        return None
+
+
+def run_trials(num_trials,
+               epochs,
+               train_dataloader,
+               val_dataloader,
+               model,
+               loss_fn,
+               optimizer,
+               scheduler=None,
+               verbose=False,
+               record_accuracies=False,
+               num_subclasses=1):
+
+    if record_accuracies:
+        results = []
+
+    for n in range(num_trials):
+        if verbose:
+            print(f"Trial {n + 1}/{num_trials}")
+
+        accuracies = train_epochs(epochs,
+                                  train_dataloader,
+                                  val_dataloader,
+                                  model,
+                                  loss_fn,
+                                  optimizer,
+                                  scheduler,
+                                  verbose,
+                                  record_accuracies,
+                                  num_subclasses)
+
+        if record_accuracies:
             results.extend(accuracies)
 
     if record_accuracies:
