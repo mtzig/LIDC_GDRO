@@ -28,7 +28,7 @@ for malig in range(4):
     maligs.extend((malig,)*length)
 
 lidc['spic_b'] = np.where(lidc['spiculation'] > 1, 1, 0)
-maligs_b = list(map( lambda x:int(x>3), maligs))
+maligs_b = list(map( lambda x:int(x>1), maligs))
 spics = [m*2+s for m,s in zip(maligs_b, lidc['spic_b'])]
 df_split = pd.DataFrame(zip(noduleID, spics, maligs, maligs_b, split), columns=['noduleID', 'spic_groups', 'malignancy', 'malignancy_b', 'split'])
 
