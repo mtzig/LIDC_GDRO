@@ -52,3 +52,34 @@ def evaluate(dataloader, model, num_subclasses, verbose=False):
         print("Accuracy:", accuracy, "\nAccuracy over subgroups:", subgroup_accuracy, "\nWorst Group Accuracy:", min(subgroup_accuracy))
 
     return (accuracy, *subgroup_accuracy)
+
+
+def train_epochs(epochs,
+                 train_dataloader,
+                 val_dataloader,
+                 model,
+                 loss_fn,
+                 optimizer,
+                 scheduler=None,
+                 verbose=False,
+                 record_accuracies=False,
+                 num_subclasses=1):
+    if record_accuracies:
+        results = []
+
+    for epoch in range(epochs):
+        if verbose:
+            print(f'Epoch {epoch + 1} / {epochs}')
+
+        train(train_dataloader, model, loss_fn, optimizer)
+        if scheduler:
+            scheduler.step(evaluate(val_dataloader, model, num_subclasses=num_subclasses)[0])
+
+        if record_accuracies:
+            accuracies = evaluate(val_dataloader, model, num_subclasses=num_subclasses)
+            results.extend(accuracies)
+
+    if record_accuracies:
+        return results
+    else:
+        return None
