@@ -116,7 +116,7 @@ def augmentImage(image):
 
     return image, image_90, image_180, image_270, image_f
 
-def getImages(image_folder='./LIDC(MaxSlices)_Nodules_Subgrouped', 
+def getImages(image_folder='./data/LIDC(MaxSlices)_Nodules_Subgrouped', 
               data_split_file = './data/LIDC_data_split.csv',
               lidc_subgroup_file='./data/LIDC_labels_cleaned.csv',
               image_dim = 71,

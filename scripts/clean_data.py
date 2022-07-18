@@ -14,7 +14,7 @@ df_LIDC = pd.read_csv('../data/LIDC_labels.csv')
 df_labels = df_LIDC[['noduleID', 'spiculation', 'malignancy']]
 
 
-image_folder = '../LIDC(MaxSlices)_Nodules'
+image_folder = '../data/LIDC(MaxSlices)_Nodules'
 noduleIDs = []
 
 for file in os.scandir(image_folder):
