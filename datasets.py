@@ -5,7 +5,7 @@ from PIL import Image
 
 class SubclassedDataset(Dataset):
 
-    def __init__(self, features, labels, subclasses,):
+    def __init__(self, features, labels, subclasses):
         '''
         INPUTS:
         features: list of features (as Pytorch tensors)
