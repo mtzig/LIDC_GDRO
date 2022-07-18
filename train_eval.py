@@ -51,4 +51,4 @@ def evaluate(dataloader, model, num_subclasses, verbose=False):
     if verbose:
         print("Accuracy:", accuracy, "\nAccuracy over subgroups:", subgroup_accuracy, "\nWorst Group Accuracy:", min(subgroup_accuracy))
 
-    return accuracy, *subgroup_accuracy
+    return (accuracy, *subgroup_accuracy)
