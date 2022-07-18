@@ -5,10 +5,8 @@ from sklearn.preprocessing import StandardScaler
 from datasets import SubclassedDataset
 from dataloaders import InfiniteDataLoader
 
-# numeric_data_by_radiologist_path = 'data/LIDC_20130817_AllFeatures2D_MaxSlice_MattEdited.csv'
-numeric_data_path = '../data/LIDC_20130817_AllFeatures2D_MaxSlicePerNodule_inLineRatings.csv'
-# max_slice_data_path = 'data/LIDC_20130817_AllFeatures2D_MaxSlicePerNodule_inLineRatings.csv'
-subtype_data_path = '../data/subclass_labels/LIDC_spic_subgrouped.csv'
+numeric_data_path = 'LIDC_20130817_AllFeatures2D_MaxSlicePerNodule_inLineRatings.csv'
+subclass_data_path = 'subclass_labels/LIDC_spic_subclasses.csv'
 
 id_name = 'noduleID'
 radiologist_id_name = 'RadiologistID'
@@ -31,17 +29,17 @@ numeric_feature_names = ['Area', 'ConvexArea', 'Perimeter', 'ConvexPerimeter', '
 # numeric_feature_names += [f'CNN_{n}' for n in range(1, 37)]
 semantic_feature_names = ['subtlety', 'internalStructure', 'calcification', 'sphericity', 'margin', 'lobulation', 'spiculation', 'texture', 'malignancy']
 label_name = 'malignancy'
-subclass_label_name = 'subgroup'
+subclass_label_name = 'subclass'
 subclasses = ['unmarked_benign', 'marked_benign', 'marked_malignant', 'unmarked_malignant']
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
-def load_lidc():
-    df = pd.read_csv(numeric_data_path)
+def load_lidc(data_root):
+    df = pd.read_csv(data_root + numeric_data_path)
     # max_slice_df = pd.read_csv(max_slice_data_path)
     # max_slice_df.index = max_slice_df[id_name]
 
-    subtype_df = pd.read_csv(subtype_data_path)
+    subtype_df = pd.read_csv(data_root + subclass_data_path)
 
     # attach malignancy features to the numeric feature dataframe
     # for instance in df.index:

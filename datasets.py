@@ -28,7 +28,7 @@ class SubclassedDataset(Dataset):
         return self.features[idx], self.labels[idx], self.subclasses[idx]
 
 
-class OnDemandWaterbirdsDataset(Dataset):
+class OnDemandImageDataset(Dataset):
     def __init__(self, metadata, root_dir, transform, device):
         '''
         INPUTS:
