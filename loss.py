@@ -2,47 +2,9 @@ import torch
 
 
 class GDROLoss:
-    def __init__(self, model, loss_fn, hparams, normalize_loss=False):
-        self.model = model
-        self.loss_fn = loss_fn
-        self.q = torch.tensor([])
-        self.eta = hparams["groupdro_eta"]
-        self.normalize_loss = normalize_loss
-
-    def __call__(self, minibatch):
-        # minibatch contains n batches of data where n is the number of subtypes
-
-        device = "cuda" if minibatch[0][0].is_cuda else "cpu"
-
-        if len(self.q) == 0:
-            self.q = torch.ones(len(minibatch)).to(device)
-            self.q /= self.q.sum()
-
-        losses = torch.zeros(len(minibatch)).to(device)
-
-        if self.normalize_loss:
-            subgroup_batch_sizes = list(map(lambda x: x[0].shape[0], minibatch))
-            total_samples = sum(subgroup_batch_sizes)
-
-        for m in range(len(minibatch)):
-            X, y = minibatch[m]
-            losses[m] = self.loss_fn(self.model(X), y)
-
-        if self.model.training:
-            self.q *= torch.exp(self.eta * losses.data)  # vectorized (might not work)
-            self.q /= self.q.sum()
-
-        # print(self.q)
-
-        loss = torch.dot(losses, self.q)
-
-        return loss
-
-
-class GDROLossAlt:
-    '''
+    """
     GDROLoss function to be used with SubclassedNoduleDataset
-    '''
+    """
 
     def __init__(self, model, loss_fn, eta, num_subclasses, normalize_loss=False):
         self.model = model
@@ -176,36 +138,6 @@ class ERMGDROLoss:
 
 
 class DynamicERMGDROLoss:
-    def __init__(self, model, loss_fn, gdro_eta, gamma, num_subclasses):
-        self.ermgdro = ERMGDROLoss(model, loss_fn, gdro_eta, num_subclasses)
-        self.gamma = gamma
-        self.q = torch.tensor([])
-        self.model = model
-
-    def __call__(self, minibatch):
-        device = minibatch[0].device
-
-        if len(self.q) == 0:
-            self.q = torch.tensor([0.5, 0.5]).to(device)
-
-        losses = torch.zeros(2).to(device)
-
-        ermgdro_losses = self.ermgdro(minibatch)
-        losses[0] = ermgdro_losses[1]  # ERM loss
-        losses[1] = ermgdro_losses[2]  # GDRO loss
-
-        if self.model.training:
-            self.q *= torch.exp(self.gamma * losses.data)
-            self.q /= self.q.sum()
-
-        loss = torch.dot(self.q, losses)
-
-        del losses
-
-        return loss
-
-
-class DynamicERMGDROLossAlt:
     def __init__(self, model, loss_fn, gdro_eta, mix_gamma, num_subclasses, initial=None):
 
         if initial is None:
@@ -273,7 +205,7 @@ class DynamicERMGDROLossAlt:
         return loss
 
 
-class UpweightSmall:
+class UpweightLoss:
     def __init__(self, model, loss_fn, num_subclasses):
         self.model = model
         self.loss_fn = loss_fn
@@ -297,6 +229,6 @@ class UpweightSmall:
             if torch.sum(subclass_idx) > 0:
                 losses[subclass] = self.loss_fn(preds[subclass_idx], y[subclass_idx])
 
-        loss = torch.sum(losses)
+        loss = torch.sum(losses) / self.num_subclasses
 
         return loss

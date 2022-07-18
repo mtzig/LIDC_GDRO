@@ -10,7 +10,7 @@ import numpy as np
 import os
 
 
-df_LIDC = pd.read_csv('../data/LIDC_labels.csv')
+df_LIDC = pd.read_csv('../data/LIDC_semantic.csv')
 df_labels = df_LIDC[['noduleID', 'spiculation', 'malignancy']]
 
 
@@ -22,4 +22,4 @@ for file in os.scandir(image_folder):
     noduleIDs.append(noduleID)
 
 df_labels = df_labels[df_labels['noduleID'].isin(noduleIDs)]
-df_labels.to_csv('../data/LIDC_labels_cleaned.csv')
+df_labels.to_csv('../data/LIDC_semantic_spiculation_malignancy.csv')

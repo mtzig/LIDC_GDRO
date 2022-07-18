@@ -7,7 +7,7 @@ import numpy as np
 moves images into folder seperated by malignancy level
 '''
 
-df_LIDC = pd.read_csv('../data/LIDC_labels_cleaned.csv', index_col=0)
+df_LIDC = pd.read_csv('../data/LIDC_semantic_spiculation_malignancy.csv', index_col=0)
 
 image_folder = '../LIDC(MaxSlices)_Nodules'
 subtyped_image_folder = '../LIDC(MaxSlices)_Nodules_Subgrouped'
