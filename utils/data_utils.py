@@ -6,7 +6,7 @@ from datasets import SubclassedDataset
 from dataloaders import InfiniteDataLoader
 
 numeric_data_path = 'LIDC_20130817_AllFeatures2D_MaxSlicePerNodule_inLineRatings.csv'
-subclass_data_path = 'subclass_labels/LIDC_spic_subclasses.csv'
+subclass_data_path = 'subclass_labels/LIDC_data_split_with_cluster.csv'
 
 id_name = 'noduleID'
 radiologist_id_name = 'RadiologistID'
