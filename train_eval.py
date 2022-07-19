@@ -2,6 +2,8 @@ import numpy as np
 
 import torch
 
+import loss
+
 
 def train(dataloader, model, loss_fn, optimizer, verbose=False):
     model.train()
@@ -57,16 +59,23 @@ def evaluate(dataloader, model, num_subclasses, verbose=False):
 
 def train_epochs(epochs,
                  train_dataloader,
-                 val_dataloader,
+                 test_dataloader,
                  model,
                  loss_fn,
                  optimizer,
                  scheduler=None,
                  verbose=False,
-                 record_accuracies=False,
+                 record=False,
                  num_subclasses=1):
-    if record_accuracies:
+    if record:
         results = []
+        q_data = None
+        g_data = None
+        if isinstance(loss_fn, loss.GDROLoss):
+            q_data = []
+        if isinstance(loss_fn, loss.DynamicLoss):
+            q_data = []
+            g_data = []
 
     for epoch in range(epochs):
         if verbose:
@@ -74,14 +83,19 @@ def train_epochs(epochs,
 
         train(train_dataloader, model, loss_fn, optimizer)
         if scheduler:
-            scheduler.step(evaluate(val_dataloader, model, num_subclasses=num_subclasses)[0])
+            scheduler.step(evaluate(test_dataloader, model, num_subclasses=num_subclasses)[0])
 
-        if record_accuracies:
-            accuracies = evaluate(val_dataloader, model, num_subclasses=num_subclasses)
+        if record:
+            accuracies = evaluate(test_dataloader, model, num_subclasses=num_subclasses)
             results.extend(accuracies)
+            if isinstance(loss_fn, loss.GDROLoss):
+                q_data.extend(loss_fn.q.tolist())
+            if isinstance(loss_fn, loss.DynamicLoss):
+                q_data.extend(loss_fn.q.tolist())
+                g_data.extend(loss_fn.g.tolist())
 
-    if record_accuracies:
-        return results
+    if record:
+        return results, q_data, g_data
     else:
         return None
 
@@ -89,37 +103,56 @@ def train_epochs(epochs,
 def run_trials(num_trials,
                epochs,
                train_dataloader,
-               val_dataloader,
+               test_dataloader,
                model,
                loss_fn,
                optimizer,
                scheduler=None,
                verbose=False,
-               record_accuracies=False,
+               record=False,
                num_subclasses=1):
 
-    if record_accuracies:
+    if record:
         results = []
+        roc_data = [None, None]
+        q_data = None
+        g_data = None
+        if isinstance(loss_fn, loss.GDROLoss):
+            q_data = []
+        if isinstance(loss_fn, loss.DynamicLoss):
+            q_data = []
+            g_data = []
 
     for n in range(num_trials):
         if verbose:
             print(f"Trial {n + 1}/{num_trials}")
 
-        accuracies = train_epochs(epochs,
-                                  train_dataloader,
-                                  val_dataloader,
-                                  model,
-                                  loss_fn,
-                                  optimizer,
-                                  scheduler,
-                                  verbose,
-                                  record_accuracies,
-                                  num_subclasses)
+        accuracies, q_data, g_data = train_epochs(epochs,
+                                                  train_dataloader,
+                                                  test_dataloader,
+                                                  model,
+                                                  loss_fn,
+                                                  optimizer,
+                                                  scheduler,
+                                                  verbose,
+                                                  record,
+                                                  num_subclasses)
 
-        if record_accuracies:
+        if record:
             results.extend(accuracies)
+            with torch.no_grad():
+                preds = model(torch.stack(test_dataloader.dataset.features))
+                probabilities = torch.nn.functional.softmax(preds, dim=1)[:, 1]
+                if roc_data[0] is None:
+                    roc_data[0] = probabilities
+                else:
+                    roc_data[0] += probabilities
+    if record:
+        roc_data[0] /= num_trials
+        labels = test_dataloader.dataset.labels
+        roc_data[1] = labels
 
-    if record_accuracies:
-        return results
+    if record:
+        return results, roc_data
     else:
         return None
