@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-lidc = pd.read_csv('../data/LIDC_labels_cleaned.csv', index_col=0)
+lidc = pd.read_csv('../data/LIDC_semantic_spiculation_malignancy.csv', index_col=0)
 lidc = lidc[lidc['malignancy']!=3]
 lidc['malignancy'] = np.where(lidc['malignancy'] > 3, lidc['malignancy'] - 2, lidc['malignancy'] - 1)
 lidc = lidc.sample(frac=1, random_state=59)
