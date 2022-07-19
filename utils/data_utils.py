@@ -30,7 +30,6 @@ numeric_feature_names = ['Area', 'ConvexArea', 'Perimeter', 'ConvexPerimeter', '
 semantic_feature_names = ['subtlety', 'internalStructure', 'calcification', 'sphericity', 'margin', 'lobulation', 'spiculation', 'texture', 'malignancy']
 label_name = 'malignancy'
 subclass_label_name = 'subclass'
-subclasses = ['unmarked_benign', 'marked_benign', 'marked_malignant', 'unmarked_malignant']
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
@@ -79,8 +78,7 @@ def split_to_tensors(df):
     # tensorify
     data = torch.FloatTensor(df.loc[:, numeric_feature_names].values).to(device)
     labels = torch.LongTensor(df.loc[:, label_name].values).to(device)
-    subclass_labels = torch.LongTensor(
-        list(map(lambda x: subclasses.index(x), df.loc[:, subclass_label_name].values))).to(device)
+    subclass_labels = torch.LongTensor(df.loc[:, subclass_label_name].values).to(device)
 
     return data, labels, subclass_labels
 
