@@ -64,10 +64,9 @@ class GDROLoss:
 
 
 class ERMLoss:
-    def __init__(self, model, loss_fn, hparams, subclassed=False):
+    def __init__(self, model, loss_fn, subclassed=False):
         self.model = model
         self.loss_fn = loss_fn
-        self.hparams = hparams
         self.subclassed = subclassed  # true if we are using SubclassedNoduleDataset
 
     def __call__(self, minibatch):
@@ -137,7 +136,7 @@ class ERMGDROLoss:
         return loss, erm_loss, gdro_loss
 
 
-class DynamicERMGDROLoss:
+class DynamicLoss:
     def __init__(self, model, loss_fn, gdro_eta, mix_gamma, num_subclasses, initial=None):
 
         if initial is None:
