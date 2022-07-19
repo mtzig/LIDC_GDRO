@@ -74,9 +74,9 @@ def scale_image(image_dim, upscale_amount=None, crop_change=None):
 def get_malignancy(lidc_df, nodule_id, binary, device):
     malignancy = lidc_df[lidc_df['noduleID'] == nodule_id]['malignancy'].iloc[0]
     if binary:
-        return torch.tensor(1, device=device) if malignancy > 3 else torch.tensor(0, device=device)
+        return torch.tensor(1, device=device) if malignancy > 1 else torch.tensor(0, device=device)
 
-    return torch.tensor(malignancy - 2, device=device) if malignancy > 3 else torch.tensor(malignancy - 1,
+    return torch.tensor(malignancy, device=device) if malignancy > 1 else torch.tensor(malignancy,
                                                                                            device=device)
 
 
@@ -116,7 +116,7 @@ def augment_image(image):
 
 def get_images(image_folder='./data/LIDC(MaxSlices)_Nodules_Subgrouped',
                data_split_file='./data/train_test_splits/LIDC_data_split.csv',
-               lidc_subgroup_file='./data/train_test_splits/LIDC_data_split.csv',
+               lidc_subgroup_file='./data/subclass_labels/LIDC_data_split_with_cluster.csv',
                image_dim=71,
                sublabels=None,
                split=True,
@@ -162,7 +162,7 @@ def get_images(image_folder='./data/LIDC(MaxSlices)_Nodules_Subgrouped',
             malignancy = get_malignancy(lidc, temp_nodule_id, binary, device)
 
             if sublabels:
-                subtype = get_subclass(train_test, temp_nodule_id, sublabels)
+                subtype = get_subclass(lidc, temp_nodule_id, sublabels)
 
             if split:
                 split_type = get_data_split(train_test, temp_nodule_id)
