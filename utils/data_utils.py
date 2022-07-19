@@ -26,7 +26,6 @@ numeric_feature_names = ['Area', 'ConvexArea', 'Perimeter', 'ConvexPerimeter', '
 # numeric_feature_names += [f'CNN_{n}' for n in range(1, 37)]
 semantic_feature_names = ['subtlety', 'internalStructure', 'calcification', 'sphericity', 'margin', 'lobulation', 'spiculation', 'texture', 'malignancy']
 label_name = 'malignancy'
-subclass_label_name = 'subclass'
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
@@ -35,7 +34,7 @@ def load_lidc(data_root, feature_path, subclass_path):
     # max_slice_df = pd.read_csv(max_slice_data_path)
     # max_slice_df.index = max_slice_df[id_name]
 
-    subtype_df = pd.read_csv(data_root + subclass_path)
+    subclass_df = pd.read_csv(data_root + subclass_path)
 
     # attach malignancy features to the numeric feature dataframe
     # for instance in df.index:
@@ -43,21 +42,21 @@ def load_lidc(data_root, feature_path, subclass_path):
     #     radiologist = df.at[instance, radiologist_id_name]
     #     df.at[instance, label_name] = max_slice_df.at[nodule_id, label_name + f'_{radiologist}']
 
-    return df, subtype_df
+    return df, subclass_df
 
 
-def preprocess_data(df, subtype_df):
+def preprocess_data(df, subclass_df, subclass_column='subclass'):
     # select features and labels
     df = df.loc[:, [id_name, *numeric_feature_names, label_name]]
 
     # add subclass data
-    df[subclass_label_name] = np.empty(len(df))
-    subtype_df.index = subtype_df[id_name].values
+    df['subclass'] = np.empty(len(df))
+    subclass_df.index = subclass_df[id_name].values
 
-    df = df[df[id_name].isin(subtype_df[id_name])]
+    df = df[df[id_name].isin(subclass_df[id_name])]
 
     for i in df.index:
-        df.at[i, subclass_label_name] = subtype_df.at[df.at[i, id_name], subclass_label_name]
+        df.at[i, 'subclass'] = subclass_df.at[df.at[i, id_name], subclass_column]
 
     # remove malignancy = 3 or out of range 1-5
     df = df[df[label_name].isin([1, 2, 4, 5])]
@@ -75,7 +74,7 @@ def split_to_tensors(df):
     # tensorify
     data = torch.FloatTensor(df.loc[:, numeric_feature_names].values).to(device)
     labels = torch.LongTensor(df.loc[:, label_name].values).to(device)
-    subclass_labels = torch.LongTensor(df.loc[:, subclass_label_name].values).to(device)
+    subclass_labels = torch.LongTensor(df.loc[:, 'subclass'].values).to(device)
 
     return data, labels, subclass_labels
 
