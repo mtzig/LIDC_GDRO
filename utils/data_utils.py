@@ -5,9 +5,6 @@ from sklearn.preprocessing import StandardScaler
 from datasets import SubclassedDataset
 from dataloaders import InfiniteDataLoader
 
-numeric_data_path = 'LIDC_20130817_AllFeatures2D_MaxSlicePerNodule_inLineRatings.csv'
-subclass_data_path = 'subclass_labels/LIDC_data_split_with_cluster.csv'
-
 id_name = 'noduleID'
 radiologist_id_name = 'RadiologistID'
 numeric_feature_names = ['Area', 'ConvexArea', 'Perimeter', 'ConvexPerimeter', 'EquivDiameter',
@@ -33,12 +30,12 @@ subclass_label_name = 'subclass'
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
-def load_lidc(data_root):
-    df = pd.read_csv(data_root + numeric_data_path)
+def load_lidc(data_root, feature_path, subclass_path):
+    df = pd.read_csv(data_root + feature_path)
     # max_slice_df = pd.read_csv(max_slice_data_path)
     # max_slice_df.index = max_slice_df[id_name]
 
-    subtype_df = pd.read_csv(data_root + subclass_data_path)
+    subtype_df = pd.read_csv(data_root + subclass_path)
 
     # attach malignancy features to the numeric feature dataframe
     # for instance in df.index:
