@@ -115,8 +115,8 @@ def augment_image(image):
 
 
 def get_images(image_folder='./data/LIDC(MaxSlices)_Nodules_Subgrouped',
-               data_split_file='./data/LIDC_data_split.csv',
-               lidc_subgroup_file='./data/LIDC_semantic_spiculation_malignancy.csv',
+               data_split_file='./data/train_test_splits/LIDC_data_split.csv',
+               lidc_subgroup_file='./data/train_test_splits/LIDC_data_split.csv',
                image_dim=71,
                sublabels=None,
                split=True,
