@@ -211,7 +211,7 @@ def getImages(image_folder='./data/LIDC(MaxSlices)_Nodules_Subgrouped',
     else:
       return nodule_id, test_data
 
-def getCNNFeatures(feature_file = './data/erm_cluster_cnn_features_1.csv', split_file = './data/LIDC_data_split_with_clusters.csv', device='cpu', subclass='clusters'):
+def getCNNFeatures(feature_file = './data/erm_cluster_cnn_features_1.csv', split_file = './data/LIDC_data_split_with_cluster.csv', device='cpu', subclass='clusters'):
     df_features = pd.read_csv(feature_file, index_col=0)
     df_splits = pd.read_csv(split_file, index_col=0)
     df = df_features.sort_values('noduleID')
