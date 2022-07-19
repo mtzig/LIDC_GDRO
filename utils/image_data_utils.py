@@ -162,7 +162,7 @@ def get_images(image_folder='./data/LIDC(MaxSlices)_Nodules_Subgrouped',
             malignancy = get_malignancy(lidc, temp_nodule_id, binary, device)
 
             if sublabels:
-                subtype = get_subclass(train_test, temp_nodule_id, sublabels)
+                subtype = get_subclass(lidc, temp_nodule_id, sublabels)
 
             if split:
                 split_type = get_data_split(train_test, temp_nodule_id)
