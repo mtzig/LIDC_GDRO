@@ -1,7 +1,7 @@
 import torch
 from loss import ERMLoss, GDROLoss, DynamicLoss, UpweightLoss
 import models
-from utils import data_utils
+from utils import data_utils, image_data_utils
 from train_eval import run_trials
 import pandas as pd
 from datetime import datetime
@@ -32,31 +32,36 @@ feature_path = 'LIDC_20130817_AllFeatures2D_MaxSlicePerNodule_inLineRatings.csv'
 
 results_root_dir = 'test_results/standardized/'
 
-test_name = 'LIDC_designed_features_mal_groups'
+test_name = 'LIDC_CNN_features_CNN_clusters'
 
-df = data_utils.preprocess_data(
-    *data_utils.load_lidc(
-        data_root='data/',
-        feature_path=feature_path,
-        subclass_path=subclass_path
-    ),
-    subclass_column=subclass_column
-)
+# df = data_utils.preprocess_data(
+#     *data_utils.load_lidc(
+#         data_root='data/',
+#         feature_path=feature_path,
+#         subclass_path=subclass_path
+#     ),
+#     subclass_column=subclass_column
+# )
+#
+# train_dataloader, val_dataloader, test_dataloader = data_utils.train_val_test_dataloaders(df, split_path="data/train_test_splits/LIDC_data_split.csv", batch_size=batch_size)
 
-num_subclasses = len(df['subclass'].unique())
+train, val, test = image_data_utils.get_cnn_features(device=device)
+train_dataloader = data_utils.create_dataloader(train, batch_size, is_dataframe=False)
+val_dataloader = data_utils.create_dataloader(val, len(val), is_dataframe=False)
+test_dataloader = data_utils.create_dataloader(test, len(test), is_dataframe=False)
+
+num_subclasses = 3  # len(df['subclass'].unique())
 subtypes = ["Overall"]
+subtypes.extend(["Benign", "Malignant 1", "Malignant 2"])
 # subtypes.extend(["Unspiculated benign", "Spiculated benign", "Spiculated malignant", "Unspiculated malignant"])
-subtypes.extend(["Malignancy 1", "Malignancy 2", "Malignancy 4", "Malignancy 5"])
+# subtypes.extend(["Malignancy 1", "Malignancy 2", "Malignancy 4", "Malignancy 5"])
 
 erm = ERMLoss(None, torch.nn.CrossEntropyLoss())
 gdro = GDROLoss(None, torch.nn.CrossEntropyLoss(), eta, num_subclasses)
 dynamic = DynamicLoss(None, torch.nn.CrossEntropyLoss(), eta, gamma, num_subclasses)
 upweight = UpweightLoss(None, torch.nn.CrossEntropyLoss(), num_subclasses)
 
-train_dataloader, val_dataloader, test_dataloader = data_utils.train_val_test_dataloaders(df, split_path="data/train_test_splits/LIDC_data_split.csv", batch_size=batch_size)
-
-
-model_args = [64, 36, 2]
+model_args = [512, 64, 36, 2]
 optimizer_args = {'lr': lr, 'weight_decay': wd}
 
 results = {"Accuracies": {}, "q": {}, "g": {}, "ROC": {}}

@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 from train_eval import train, evaluate
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from matplotlib import pyplot as plt
+# from matplotlib import pyplot as plt
 
 
 def get_normed(this_array, this_min=0, this_max=255, set_to_int=True):
@@ -209,23 +209,23 @@ def get_images(image_folder='./data/LIDC(MaxSlices)_Nodules_Subgrouped',
 
 
 def get_cnn_features(feature_file='./data/erm_cluster_cnn_features_1.csv',
-                     split_file='./data/LIDC_data_split_with_clusters.csv', device='cpu', subclass='clusters'):
+                     split_file='./data/subclass_labels/LIDC_data_split_with_cluster.csv', device='cpu', subclass='cluster'):
     df_features = pd.read_csv(feature_file, index_col=0)
     df_splits = pd.read_csv(split_file, index_col=0)
     df = df_features.sort_values('noduleID')
     df['clusters'] = df_splits[subclass]
+    df['malignancy_b'] = df_splits['malignancy_b']
 
     dfs = []
     for i in range(3):
-        dfs.append(df[df['split'] == i])
+        dfs.append(df[df_splits['split'] == i])
 
     datas = []
     for d in dfs:
-        X = torch.unbind(
-            torch.tensor(d.drop(['noduleID', 'split', 'malignancy', 'malignancy_b', 'clusters'], axis=1).values,
-                         device=device, dtype=torch.float32))
-        y = torch.unbind(torch.tensor(d['malignancy_b'].values, device=device))
-        c = torch.unbind(torch.tensor(d['clusters'].values, device=device))
+        X = torch.tensor(d.drop(['noduleID', 'clusters', 'malignancy_b'], axis=1).values,
+                         device=device, dtype=torch.float32)
+        y = torch.tensor(d['malignancy_b'].values, device=device)
+        c = torch.tensor(d['clusters'].values, device=device)
         datas.append((X, y, c))
 
     return datas
