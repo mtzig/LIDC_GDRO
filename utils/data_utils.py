@@ -89,3 +89,19 @@ def create_dataloader(data, batch_size, is_dataframe=True):
     dataloader = InfiniteDataLoader(SubclassedDataset(X, y, c), batch_size=batch_size)
 
     return dataloader
+
+
+def train_val_test_dataloaders(df, split_path, batch_size):
+    # get train/test flags
+    train_split = pd.read_csv(split_path)
+
+    # create train/test dataframes
+    train_df = df[df["noduleID"].isin(train_split[train_split["split"] == 0]["noduleID"].values)]
+    val_df = df[df["noduleID"].isin(train_split[train_split["split"] == 1]["noduleID"].values)]
+    test_df = df[df["noduleID"].isin(train_split[train_split["split"] == 2]["noduleID"].values)]
+
+    train_dataloader = create_dataloader(train_df, batch_size)
+    val_dataloader = create_dataloader(val_df, len(val_df))
+    test_dataloader = create_dataloader(test_df, len(test_df))
+
+    return train_dataloader, val_dataloader, test_dataloader

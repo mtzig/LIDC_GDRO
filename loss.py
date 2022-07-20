@@ -64,18 +64,14 @@ class GDROLoss:
 
 
 class ERMLoss:
-    def __init__(self, model, loss_fn, subclassed=False):
+    def __init__(self, model, loss_fn):
         self.model = model
         self.loss_fn = loss_fn
-        self.subclassed = subclassed  # true if we are using SubclassedNoduleDataset
 
     def __call__(self, minibatch):
         # minibatch contains one batch of non-subtyped data
 
-        if self.subclassed:
-            X, y, _ = minibatch
-        else:
-            X, y = minibatch
+        X, y, _ = minibatch
 
         loss = self.loss_fn(self.model(X), y)
 

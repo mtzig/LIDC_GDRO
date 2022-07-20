@@ -68,7 +68,7 @@ def train_epochs(epochs,
                  record=False,
                  num_subclasses=1):
     if record:
-        results = []
+        accuracies = []
         q_data = None
         g_data = None
         if isinstance(loss_fn, loss.GDROLoss):
@@ -86,8 +86,8 @@ def train_epochs(epochs,
             scheduler.step(evaluate(test_dataloader, model, num_subclasses=num_subclasses)[0])
 
         if record:
-            accuracies = evaluate(test_dataloader, model, num_subclasses=num_subclasses)
-            results.extend(accuracies)
+            epoch_accuracies = evaluate(test_dataloader, model, num_subclasses=num_subclasses)
+            accuracies.extend(epoch_accuracies)
             if isinstance(loss_fn, loss.GDROLoss):
                 q_data.extend(loss_fn.q.tolist())
             if isinstance(loss_fn, loss.DynamicLoss):
@@ -95,7 +95,7 @@ def train_epochs(epochs,
                 g_data.extend(loss_fn.g.tolist())
 
     if record:
-        return results, q_data, g_data
+        return accuracies, q_data, g_data
     else:
         return None
 
@@ -104,22 +104,26 @@ def run_trials(num_trials,
                epochs,
                train_dataloader,
                test_dataloader,
-               model,
-               loss_fn,
-               optimizer,
+               model_class,
+               model_args,
+               loss_class,
+               loss_args,
+               optimizer_class,
+               optimizer_args,
+               device='cpu',
+               num_subclasses=1,
                scheduler=None,
                verbose=False,
-               record=False,
-               num_subclasses=1):
-
+               record=False
+               ):
     if record:
-        results = []
+        accuracies = []
         roc_data = [None, None]
         q_data = None
         g_data = None
-        if isinstance(loss_fn, loss.GDROLoss):
+        if loss_class is loss.GDROLoss:
             q_data = []
-        if isinstance(loss_fn, loss.DynamicLoss):
+        if loss_class is loss.DynamicLoss:
             q_data = []
             g_data = []
 
@@ -127,19 +131,28 @@ def run_trials(num_trials,
         if verbose:
             print(f"Trial {n + 1}/{num_trials}")
 
-        accuracies, q_data, g_data = train_epochs(epochs,
-                                                  train_dataloader,
-                                                  test_dataloader,
-                                                  model,
-                                                  loss_fn,
-                                                  optimizer,
-                                                  scheduler,
-                                                  verbose,
-                                                  record,
-                                                  num_subclasses)
+        model = model_class(*model_args).to(device)
+        loss_fn = loss_class(model, *loss_args)
+        optimizer = optimizer_class(model.parameters(), *optimizer_args)
+
+        trial_accuracies, trial_q_data, trial_g_data = train_epochs(epochs,
+                                                                    train_dataloader,
+                                                                    test_dataloader,
+                                                                    model,
+                                                                    loss_fn,
+                                                                    optimizer,
+                                                                    scheduler,
+                                                                    verbose,
+                                                                    record,
+                                                                    num_subclasses)
 
         if record:
-            results.extend(accuracies)
+            accuracies.extend(trial_accuracies)
+            if isinstance(loss_fn, loss.GDROLoss):
+                q_data.extend(trial_q_data)
+            if isinstance(loss_fn, loss.DynamicLoss):
+                q_data.extend(trial_q_data)
+                g_data.extend(trial_g_data)
             with torch.no_grad():
                 preds = model(torch.stack(test_dataloader.dataset.features))
                 probabilities = torch.nn.functional.softmax(preds, dim=1)[:, 1]
@@ -153,6 +166,6 @@ def run_trials(num_trials,
         roc_data[1] = labels
 
     if record:
-        return results, roc_data
+        return accuracies, q_data, g_data, roc_data
     else:
         return None
