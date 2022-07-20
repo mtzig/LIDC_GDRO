@@ -33,10 +33,10 @@ def evaluate(dataloader, model, num_subclasses, verbose=False):
     num_samples = np.zeros(num_subclasses)
     subgroup_correct = np.zeros(num_subclasses)
     with torch.no_grad():
-        for i in range(steps_per_epoch):
-            minibatch = next(dataloader)
+            X = dataloader.dataset.features
+            y = dataloader.dataset.labels
+            c = dataloader.dataset.subclasses
 
-            X, y, c = minibatch
             pred = model(X)
 
             for subclass in range(num_subclasses):
@@ -53,7 +53,7 @@ def evaluate(dataloader, model, num_subclasses, verbose=False):
         print("Accuracy:", accuracy, "\nAccuracy over subgroups:", subgroup_accuracy, "\nWorst Group Accuracy:",
               min(subgroup_accuracy))
 
-    return accuracy, *subgroup_accuracy
+    return (accuracy, *subgroup_accuracy)
 
 
 def train_epochs(epochs,

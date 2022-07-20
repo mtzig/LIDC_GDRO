@@ -10,6 +10,13 @@ import argparse
 
 verbose = True
 
+parser = argparse.ArgumentParser()
+parser.add_argument('subclass_column')
+parser.add_argument('--test_name', default='test')
+parser.add_argument('--cnn', action='store_true')
+
+args = parser.parse_args()
+
 # hyperparameters
 
 lr = 0.0005
@@ -27,41 +34,49 @@ epochs = 100
 batch_size = 128
 split_path = 'train_test_splits/LIDC_data_split.csv'
 subclass_path = 'subclass_labels/LIDC_data_split_with_cluster.csv'
-subclass_column = 'malignancy'
+subclass_column = args.subclass_column
 feature_path = 'LIDC_20130817_AllFeatures2D_MaxSlicePerNodule_inLineRatings.csv'
 
 results_root_dir = 'test_results/standardized/'
 
-test_name = 'LIDC_CNN_features_CNN_clusters'
+test_name = args.test_name
 
-# df = data_utils.preprocess_data(
-#     *data_utils.load_lidc(
-#         data_root='data/',
-#         feature_path=feature_path,
-#         subclass_path=subclass_path
-#     ),
-#     subclass_column=subclass_column
-# )
-#
-# train_dataloader, val_dataloader, test_dataloader = data_utils.train_val_test_dataloaders(df, split_path="data/train_test_splits/LIDC_data_split.csv", batch_size=batch_size)
+if args.cnn:
+    train, val, test = image_data_utils.get_cnn_features(device=device)
+    train_dataloader = data_utils.create_dataloader(train, batch_size, is_dataframe=False)
+    val_dataloader = data_utils.create_dataloader(val, len(val), is_dataframe=False)
+    test_dataloader = data_utils.create_dataloader(test, len(test), is_dataframe=False)
+else:
+    df = data_utils.preprocess_data(
+        *data_utils.load_lidc(
+            data_root='data/',
+            feature_path=feature_path,
+            subclass_path=subclass_path
+        ),
+        subclass_column=subclass_column
+    )
+    train_dataloader, val_dataloader, test_dataloader = data_utils.train_val_test_dataloaders(df, split_path="data/train_test_splits/LIDC_data_split.csv", batch_size=batch_size)
 
-train, val, test = image_data_utils.get_cnn_features(device=device)
-train_dataloader = data_utils.create_dataloader(train, batch_size, is_dataframe=False)
-val_dataloader = data_utils.create_dataloader(val, len(val), is_dataframe=False)
-test_dataloader = data_utils.create_dataloader(test, len(test), is_dataframe=False)
-
-num_subclasses = 3  # len(df['subclass'].unique())
+num_subclasses = len(test_dataloader.dataset.subclasses.unique())
 subtypes = ["Overall"]
-subtypes.extend(["Benign", "Malignant 1", "Malignant 2"])
-# subtypes.extend(["Unspiculated benign", "Spiculated benign", "Spiculated malignant", "Unspiculated malignant"])
-# subtypes.extend(["Malignancy 1", "Malignancy 2", "Malignancy 4", "Malignancy 5"])
+if subclass_column == 'cluster':
+    subtypes.extend(["Benign", "Malignant 1", "Malignant 2"])
+elif subclass_column == 'spic_groups':
+    subtypes.extend(["Unspiculated benign", "Spiculated benign", "Spiculated malignant", "Unspiculated malignant"])
+elif subclass_column == 'malignancy':
+    subtypes.extend(["Malignancy 1", "Malignancy 2", "Malignancy 4", "Malignancy 5"])
+else:
+    subtypes.extend(list(range(num_subclasses)))
 
 erm = ERMLoss(None, torch.nn.CrossEntropyLoss())
 gdro = GDROLoss(None, torch.nn.CrossEntropyLoss(), eta, num_subclasses)
 dynamic = DynamicLoss(None, torch.nn.CrossEntropyLoss(), eta, gamma, num_subclasses)
 upweight = UpweightLoss(None, torch.nn.CrossEntropyLoss(), num_subclasses)
 
-model_args = [512, 64, 36, 2]
+if args.cnn:
+    model_args = [512, 64, 36, 2]
+else:
+    model_args = [64, 36, 2]
 optimizer_args = {'lr': lr, 'weight_decay': wd}
 
 results = {"Accuracies": {}, "q": {}, "g": {}, "ROC": {}}
