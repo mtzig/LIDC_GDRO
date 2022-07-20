@@ -80,9 +80,9 @@ def get_malignancy(lidc_df, nodule_id, binary, device):
                                                                                            device=device)
 
 
-def get_subclass(lidc_df, nodule_id, sublabels):
+def get_subclass(lidc_df, nodule_id, sublabels, device):
     subtype = lidc_df[lidc_df['noduleID'] == nodule_id][sublabels].iloc[0]
-    return subtype
+    return torch.tensor(subtype, device=device)
     # if subtype == 'marked_benign':
     #     return torch.tensor(0, device=device)
     # elif subtype == 'unmarked_benign':
@@ -93,8 +93,8 @@ def get_subclass(lidc_df, nodule_id, sublabels):
     #     return torch.tensor(3, device=device)
 
 
-def get_data_split(train_test_df, nodule_id):
-    return train_test_df[train_test_df['noduleID'] == nodule_id]['split'].iloc[0]
+def get_data_split(train_test_df, nodule_id, device):
+    return torch.tensor(train_test_df[train_test_df['noduleID'] == nodule_id]['split'].iloc[0], device=device)
 
 
 def augment_image(image):
@@ -162,10 +162,10 @@ def get_images(image_folder='./data/LIDC(MaxSlices)_Nodules_Subgrouped',
             malignancy = get_malignancy(lidc, temp_nodule_id, binary, device)
 
             if sublabels:
-                subtype = get_subclass(lidc, temp_nodule_id, sublabels)
+                subtype = get_subclass(lidc, temp_nodule_id, sublabels, device)
 
             if split:
-                split_type = get_data_split(train_test, temp_nodule_id)
+                split_type = get_data_split(train_test, temp_nodule_id, device)
 
             image_raw = np.loadtxt(os.path.join(image_folder, dir1, file))
             image_raw = torch.from_numpy(image_raw).to(device)
