@@ -153,8 +153,9 @@ def run_trials(num_trials,
             if isinstance(loss_fn, DynamicLoss):
                 q_data.extend(trial_q_data)
                 g_data.extend(trial_g_data)
+
             with torch.no_grad():
-                preds = model(next(test_dataloader)[0])
+                preds = model(test_dataloader.dataset.features)
                 probabilities = torch.nn.functional.softmax(preds, dim=1)[:, 1]
                 if roc_data[0] is None:
                     roc_data[0] = probabilities
