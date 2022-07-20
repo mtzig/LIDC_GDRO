@@ -194,13 +194,13 @@ def get_images(image_folder='./data/LIDC(MaxSlices)_Nodules_Subgrouped',
                 nodule_id.append(temp_nodule_id)
 
     if sublabels:
-        train_data = (train_img, train_label, train_subclasses)
-        cv_data = (cv_img, cv_label, cv_subclasses)
-        test_data = (test_img, test_label, test_subclasses)
+        train_data = (torch.stack(train_img), torch.stack(train_label), torch.stack(train_subclasses))
+        cv_data = (torch.stack(cv_img), torch.stack(cv_label), torch.stack(cv_subclasses))
+        test_data = (torch.stack(test_img), torch.stack(test_label), torch.stack(test_subclasses))
     else:
-        train_data = (train_img, train_label)
-        cv_data = (cv_img, cv_label)
-        test_data = (test_img, test_label)
+        train_data = (torch.stack(train_img), torch.stack(train_label))
+        cv_data = (torch.stack(cv_img), torch.stack(cv_label))
+        test_data = (torch.stack(test_img), torch.stack(test_label))
 
     if split:
         return train_data, cv_data, test_data
