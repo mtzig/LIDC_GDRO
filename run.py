@@ -73,7 +73,10 @@ gdro = GDROLoss(None, torch.nn.CrossEntropyLoss(), eta, num_subclasses)
 dynamic = DynamicLoss(None, torch.nn.CrossEntropyLoss(), eta, gamma, num_subclasses)
 upweight = UpweightLoss(None, torch.nn.CrossEntropyLoss(), num_subclasses)
 
-model_args = [512, 64, 36, 2]
+if args.cnn:
+    model_args = [512, 64, 36, 2]
+else:
+    model_args = [64, 36, 2]
 optimizer_args = {'lr': lr, 'weight_decay': wd}
 
 results = {"Accuracies": {}, "q": {}, "g": {}, "ROC": {}}
