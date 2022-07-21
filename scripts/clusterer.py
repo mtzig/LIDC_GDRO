@@ -52,7 +52,7 @@ def train_model(model):
                  scheduler=ReduceLROnPlateau(optimizer, mode='max', factor=0.2, patience=2, verbose=False), verbose=False, num_subclasses=4)
 
 
-def get_features(model):
+def collect_features(model):
 
     activation = {}
     def get_activation(name):
@@ -87,12 +87,12 @@ def run_clustering():
     train_model(model)
 
     #base model accuracies
-    accuracies = evaluate(tst_loader,model, 4, verbose=True)
+    accuracies = evaluate(tst_loader,model, 4, verbose=False)
     cluster_stats['accuracies'] = accuracies
 
 
     #get features
-    noduleID, img_features = get_features(model)
+    noduleID, img_features = collect_features(model)
 
     print('Collecting features')
     #collect features
