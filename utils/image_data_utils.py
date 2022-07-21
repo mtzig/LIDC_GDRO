@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 from train_eval import train, evaluate
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-# from matplotlib import pyplot as plt
+from matplotlib import pyplot as plt
 
 
 def get_normed(this_array, this_min=0, this_max=255, set_to_int=True):
@@ -71,18 +71,17 @@ def scale_image(image_dim, upscale_amount=None, crop_change=None):
     return scalar
 
 
-def get_malignancy(lidc_df, nodule_id, binary, device):
+def get_malignancy(lidc_df, nodule_id, binary):
     malignancy = lidc_df[lidc_df['noduleID'] == nodule_id]['malignancy'].iloc[0]
     if binary:
-        return torch.tensor(1, device=device) if malignancy > 1 else torch.tensor(0, device=device)
+        return torch.tensor(1, device=device) if malignancy > 1 else torch.tensor(0)
 
-    return torch.tensor(malignancy, device=device) if malignancy > 1 else torch.tensor(malignancy,
-                                                                                           device=device)
+    return torch.tensor(malignancy) if malignancy > 1 else torch.tensor(malignancy)
 
 
 def get_subclass(lidc_df, nodule_id, sublabels):
     subtype = lidc_df[lidc_df['noduleID'] == nodule_id][sublabels].iloc[0]
-    return subtype
+    return torch.tensor(subtype)
     # if subtype == 'marked_benign':
     #     return torch.tensor(0, device=device)
     # elif subtype == 'unmarked_benign':
@@ -94,7 +93,7 @@ def get_subclass(lidc_df, nodule_id, sublabels):
 
 
 def get_data_split(train_test_df, nodule_id):
-    return train_test_df[train_test_df['noduleID'] == nodule_id]['split'].iloc[0]
+    return torch.tensor(train_test_df[train_test_df['noduleID'] == nodule_id]['split'].iloc[0])
 
 
 def augment_image(image):
@@ -114,116 +113,91 @@ def augment_image(image):
     return image, image_90, image_180, image_270, image_f
 
 
-def get_images(image_folder='./data/LIDC(MaxSlices)_Nodules_Subgrouped',
-               data_split_file='./data/train_test_splits/LIDC_data_split.csv',
-               lidc_subgroup_file='./data/subclass_labels/LIDC_data_split_with_cluster.csv',
-               image_dim=71,
-               sublabels=None,
-               split=True,
-               binary=True,
-               device='cpu'):
-    """
-        Input:
-        image_folder: directory of the image files
-
-        Output:
-        m1: list of the labels encountered (1,2,4,5)
-        m2: list of binary labels encountered (benign, malignant)
-        diff: list of any nodes with discrepancy to CSV labels
-    """
-
-    train_img = []
-    train_label = []
-    train_subclasses = []
-
-    cv_img = []
-    cv_label = []
-    cv_subclasses = []
-
-    test_img = []
-    test_label = []
-    test_subclasses = []
-
-    nodule_id = []
-
-    lidc = pd.read_csv(lidc_subgroup_file)
-    train_test = pd.read_csv(data_split_file)
-
+def images_to_df(image_folder='./data/LIDC(MaxSlices)_Nodules',
+                 image_labels='./data/LIDC_semantic_spiculation_malignancy.csv',
+                 image_dim=71):
+    
+    LIDC_labels = pd.read_csv(image_labels, index_col=0)
     scalar = scale_image(image_dim)
 
-    for dir1 in os.listdir(image_folder):
-
-        if dir1 == 'Malignancy_3':
-            continue
-
-        for file in os.listdir(os.path.join(image_folder, dir1)):
-
-            temp_nodule_id = int(file.split('.')[0])
-            malignancy = get_malignancy(lidc, temp_nodule_id, binary, device)
-
-            if sublabels:
-                subtype = get_subclass(lidc, temp_nodule_id, sublabels)
-
-            if split:
-                split_type = get_data_split(train_test, temp_nodule_id)
-
-            image_raw = np.loadtxt(os.path.join(image_folder, dir1, file))
-            image_raw = torch.from_numpy(image_raw).to(device)
-            image_normed = get_normed(image_raw).unsqueeze(dim=0)
-            image = scalar(image_normed)
-
-            if split and split_type == 0:
-                images = augment_image(image)
-                train_img.extend(images)
-                train_label.extend([malignancy for _ in range(len(images))])
-                if sublabels:
-                    train_subclasses.extend([subtype for _ in range(len(images))])
-            elif split and split_type == 1:
-                cv_img.append(image)
-                cv_label.append(malignancy)
-
-                if sublabels:
-                    cv_subclasses.append(subtype)
-            else:
-                test_img.append(image)
-                test_label.append(malignancy)
-
-                if sublabels:
-                    test_subclasses.append(subtype)
-
-                nodule_id.append(temp_nodule_id)
-
-    if sublabels:
-        train_data = (train_img, train_label, train_subclasses)
-        cv_data = (cv_img, cv_label, cv_subclasses)
-        test_data = (test_img, test_label, test_subclasses)
-    else:
-        train_data = (train_img, train_label)
-        cv_data = (cv_img, cv_label)
-        test_data = (test_img, test_label)
-
-    if split:
-        return train_data, cv_data, test_data
-    else:
-        return nodule_id, test_data
+    cols = {'noduleID': [], 'malignancy': [], 'image':[]}
 
 
-def get_cnn_features(feature_file='./data/erm_cluster_cnn_features_1.csv',
-                     split_file='./data/subclass_labels/LIDC_data_split_with_cluster.csv', device='cpu', subclass='cluster'):
-    df_features = pd.read_csv(feature_file, index_col=0)
+    for file in os.listdir(image_folder):
+        nodule_id = int(file.split('.')[0])
+        malignancy = get_malignancy(LIDC_labels,nodule_id,False)
+
+        image_raw = np.loadtxt(os.path.join(image_folder, file))
+        image_raw = torch.from_numpy(image_raw)
+        image_normed = get_normed(image_raw).unsqueeze(dim=0)
+        image = scalar(image_normed)
+
+        cols['noduleID'].append(nodule_id)
+        cols['malignancy'].append(malignancy)
+        cols['image'].append(image)
+
+    img_df = pd.DataFrame(cols)
+    img_df.sort_values('noduleID', inplace=True)
+    img_df.reset_index(drop=True, inplace=True)
+
+    return img_df
+
+
+def get_features(feature_file='./data/erm_cluster_cnn_features_1.csv',
+                 split_file='./data/subclass_labels/LIDC_data_split_with_cluster.csv', 
+                 images=False,
+                 features=None,
+                 device='cpu',
+                 subclass='cluster'):
+
     df_splits = pd.read_csv(split_file, index_col=0)
-    df = df_features.sort_values('noduleID')
-    df['clusters'] = df_splits[subclass]
-    df['malignancy_b'] = df_splits['malignancy_b']
+    if images:
+        if features is None:
+            df_features = images_to_df()
+        else:
+            df_features=features
+    else:
+        df_features = pd.read_csv(feature_file, index_col=0)
+
+    df_features = df_features[df_features['noduleID'].isin(df_splits['noduleID'])]
+
+    #Sort most likely extraneous, but good for robustness
+    df_features.sort_values('noduleID', inplace=True)
+
+    df_features['clusters'] = df_splits[subclass]
+    df_features['malignancy_b'] = df_splits['malignancy_b']
 
     dfs = []
     for i in range(3):
-        dfs.append(df[df_splits['split'] == i])
+        dfs.append(df_features.loc[(df_splits['split'] == i).values])
 
     datas = []
-    for d in dfs:
-        X = torch.tensor(d.drop(['noduleID', 'clusters', 'malignancy_b'], axis=1).values,
+    for i,d in enumerate(dfs):
+
+        if images:
+
+            #If the training dataset, we need to do data augmentation
+            if i == 0:
+
+                imgs = []
+                for img in d['image']:
+                    imgs.extend(augment_image(img))
+                X = torch.stack(imgs).to(device=device, dtype=torch.float32)
+                
+
+                #hacky way to repeat the labels for the additional augmented images
+                augments = X.shape[0] // len(d)
+                d_temp = pd.DataFrame()
+                d_temp['malignancy_b'] = np.repeat(d['malignancy_b'].values, augments)
+                d_temp['clusters'] = np.repeat(d['clusters'].values, augments)
+                d=d_temp
+
+            else:
+                X = torch.stack(list(d['image'])).to(device=device, dtype=torch.float32)
+        else:
+            X = torch.tensor(d.drop(['noduleID', 'clusters', 'malignancy_b'], axis=1).values,
                          device=device, dtype=torch.float32)
+
         y = torch.tensor(d['malignancy_b'].values, device=device)
         c = torch.tensor(d['clusters'].values, device=device)
         datas.append((X, y, c))
