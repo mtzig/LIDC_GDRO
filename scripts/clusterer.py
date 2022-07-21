@@ -153,13 +153,9 @@ def run_clustering():
     cv_test_labels = clusterer.predict(cv_test_embeds)
 
     #We want majority class to be 0
-    majority_label = mode(clusterer.predict(train_embeds_benign))
-    if majority_label != 0:
+    if sum(train_labels == 1) > sum(train_labels == 0):
         train_labels = 1 - train_labels
         cv_test_labels = 1 - cv_test_labels
-
-
-
 
 
     df_features_train['cluster'] = train_labels
@@ -170,7 +166,7 @@ def run_clustering():
     df_clusters = pd.concat([df_features_train, df_features_cv_test])[['noduleID', 'cluster']]
     df_clusters.sort_values('noduleID', inplace=True)
     df_clusters.reset_index(drop=True, inplace=True)
-    df_splits['cluster'] = [ 2 * m + c for m,c in zip(df_splits['malignancy_b'], df_clusters['cluster'])]
+    df_splits['cluster'] = [0 if m == 0 else c+1 for m,c in zip(df_splits['malignancy_b'], df_clusters['cluster'])]
 
 
 
