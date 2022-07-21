@@ -99,9 +99,9 @@ def run_clustering():
     cols = []
     for idx,id in enumerate(noduleID):
         cols.append([id] + img_features[idx].cpu().numpy().tolist())
-        df_features_all = pd.DataFrame(cols).rename({0:'noduleID'}, axis=1)
-        df_features_all.sort_values('noduleID', inplace=True)
-        df_features_all.reset_index(drop=True, inplace=True)
+    df_features_all = pd.DataFrame(cols).rename({0:'noduleID'}, axis=1)
+    df_features_all.sort_values('noduleID', inplace=True)
+    df_features_all.reset_index(drop=True, inplace=True)
 
 
 
