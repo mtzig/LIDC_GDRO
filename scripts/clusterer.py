@@ -25,7 +25,7 @@ from scipy.stats import mode
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 now = datetime.now()
-results_dir = f'cluster_{now.strftime("%Y%m%d_%H%M%S")}'
+results_dir = f'cluster_results/cluster_{now.strftime("%Y%m%d_%H%M%S")}'
 os.mkdir(f'./data/{results_dir}')
 images_df = images_to_df()
 train_data, cv_data, test_data = get_features(images=True, features=images_df, device=DEVICE, subclass='malignancy')
@@ -174,7 +174,7 @@ def run_clustering():
 
 
 
-    torch.save(model.state_dict(), f'./data/{results_dir}/erm_cluster_weights.pt')
+    # torch.save(model.state_dict(), f'./data/{results_dir}/erm_cluster_weights.pt')
     df_features_all.to_csv(f'./data/{results_dir}/erm_cluster_cnn_features.csv')
 
     f_reducer = f'./data/{results_dir}/cnn_umap_reducer.sav'
