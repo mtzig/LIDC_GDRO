@@ -135,7 +135,7 @@ def run_clustering():
     silhouette_coefficients = check_cluster(train_embeds_malig)
     if silhouette_coefficients[0] != max(silhouette_coefficients):
         return False
-    cluster_stats['silhouettes'] = silhouette_coefficients
+    cluster_stats['silhouettes'] = silhouette_coefficients[:5]
 
     print('clustering')
     #final clusterer
