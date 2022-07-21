@@ -19,7 +19,7 @@ args = parser.parse_args()
 # hyperparameters
 
 lr = 0.0005
-wd = 0.005
+wd = 1.0
 eta = 0.01
 gamma = 1.0
 
