@@ -151,6 +151,7 @@ def get_features(feature_file='./data/erm_cluster_cnn_features_1.csv',
                  subclass='cluster'):
 
     df_splits = pd.read_csv(split_file, index_col=0)
+
     if images:
         if features is None:
             df_features = images_to_df()
@@ -163,9 +164,12 @@ def get_features(feature_file='./data/erm_cluster_cnn_features_1.csv',
 
     #Sort most likely extraneous, but good for robustness
     df_features.sort_values('noduleID', inplace=True)
+    df_features.reset_index(drop=True, inplace=True)
 
     df_features['clusters'] = df_splits[subclass]
     df_features['malignancy_b'] = df_splits['malignancy_b']
+
+
 
     dfs = []
     for i in range(3):
@@ -198,7 +202,7 @@ def get_features(feature_file='./data/erm_cluster_cnn_features_1.csv',
             X = torch.tensor(d.drop(['noduleID', 'clusters', 'malignancy_b'], axis=1).values,
                          device=device, dtype=torch.float32)
 
-        y = torch.tensor(d['malignancy_b'].values, device=device)
+        y = torch.tensor(d['malignancy_b'].values, device=device, dtype=torch.long)
         c = torch.tensor(d['clusters'].values, device=device)
         datas.append((X, y, c))
 
