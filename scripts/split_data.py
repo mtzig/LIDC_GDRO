@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-lidc = pd.read_csv('../data/LIDC_semantic_spiculation_malignancy.csv', index_col=0)
+lidc = pd.read_csv('./data/LIDC_semantic_spiculation_malignancy.csv', index_col=0)
 lidc = lidc[lidc['malignancy']!=3]
 lidc['malignancy'] = np.where(lidc['malignancy'] > 3, lidc['malignancy'] - 2, lidc['malignancy'] - 1)
 lidc = lidc.sample(frac=1, random_state=59)
@@ -33,7 +33,8 @@ spics = [m*2+s for m,s in zip(maligs_b, lidc['spic_b'])]
 df_split = pd.DataFrame(zip(noduleID, spics, maligs, maligs_b, split), columns=['noduleID', 'spic_groups', 'malignancy', 'malignancy_b', 'split'])
 
 # df_split = pd.DataFrame(zip(noduleID, maligs, maligs, split), columns=['noduleID', 'subgroup', 'malignancy', 'split'])
-df_split = df_split.sort_values('noduleID')
-df_split.to_csv('../data/LIDC_data_split.csv')
+df_split.sort_values('noduleID', inplace=True)
+df_split.reset_index(drop=True, inplace=True)
+df_split.to_csv('./data/train_test_splits/LIDC_data_split.csv')
     
 
