@@ -1,6 +1,7 @@
 import sys
 sys.path.append('./')
 
+import os
 import pandas as pd
 import numpy as np
 from dataloaders import InfiniteDataLoader
@@ -25,6 +26,7 @@ DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 now = datetime.now()
 results_dir = f'cluster_{now.strftime("%Y%m%d_%H%M%S")}'
+os.mkdir(f'./data/results_dir')
 images_df = images_to_df()
 train_data, cv_data, test_data = get_features(images=True, features=images_df, device=DEVICE, subclass='malignancy')
 
