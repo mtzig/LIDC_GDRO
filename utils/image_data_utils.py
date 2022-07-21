@@ -116,8 +116,7 @@ def augment_image(image):
 
 def images_to_df(image_folder='./data/LIDC(MaxSlices)_Nodules',
                  image_labels='./data/LIDC_semantic_spiculation_malignancy.csv',
-                 image_dim=71,
-                 device='cpu'):
+                 image_dim=71):
     
     LIDC_labels = pd.read_csv(image_labels, index_col=0)
     scalar = scale_image(image_dim)
@@ -127,10 +126,10 @@ def images_to_df(image_folder='./data/LIDC(MaxSlices)_Nodules',
 
     for file in os.listdir(image_folder):
         nodule_id = int(file.split('.')[0])
-        malignancy = get_malignancy(LIDC_labels,nodule_id,False,device)
+        malignancy = get_malignancy(LIDC_labels,nodule_id,False)
 
         image_raw = np.loadtxt(os.path.join(image_folder, file))
-        image_raw = torch.from_numpy(image_raw).to(device)
+        image_raw = torch.from_numpy(image_raw)
         image_normed = get_normed(image_raw).unsqueeze(dim=0)
         image = scalar(image_normed)
 
@@ -144,103 +143,6 @@ def images_to_df(image_folder='./data/LIDC(MaxSlices)_Nodules',
 
     return img_df
 
-def get_images(image_folder='./data/LIDC(MaxSlices)_Nodules_Subgrouped',
-               data_split_file='./data/train_test_splits/LIDC_data_split.csv',
-               lidc_subgroup_file='./data/subclass_labels/LIDC_data_split_with_cluster.csv',
-               image_dim=71,
-               sublabels=None,
-               split=True,
-               binary=True,
-               device='cpu'):
-    """
-        Input:
-        image_folder: directory of the image files
-
-        Output:
-        m1: list of the labels encountered (1,2,4,5)
-        m2: list of binary labels encountered (benign, malignant)
-        diff: list of any nodes with discrepancy to CSV labels
-    """
-
-    train_img = []
-    train_label = []
-    train_subclasses = []
-
-    cv_img = []
-    cv_label = []
-    cv_subclasses = []
-
-    test_img = []
-    test_label = []
-    test_subclasses = []
-
-    nodule_id = []
-
-    lidc = pd.read_csv(lidc_subgroup_file)
-    train_test = pd.read_csv(data_split_file)
-
-    scalar = scale_image(image_dim)
-
-    for dir1 in os.listdir(image_folder):
-
-        if dir1 == 'Malignancy_3':
-            continue
-
-        for file in os.listdir(os.path.join(image_folder, dir1)):
-
-            temp_nodule_id = int(file.split('.')[0])
-            malignancy = get_malignancy(lidc, temp_nodule_id, binary, device)
-
-            if sublabels:
-                subtype = get_subclass(lidc, temp_nodule_id, sublabels, device)
-
-            if split:
-                split_type = get_data_split(train_test, temp_nodule_id, device)
-
-            image_raw = np.loadtxt(os.path.join(image_folder, dir1, file))
-            image_raw = torch.from_numpy(image_raw).to(device)
-            image_normed = get_normed(image_raw).unsqueeze(dim=0)
-            image = scalar(image_normed)
-
-            if split and split_type == 0:
-                images = augment_image(image)
-                train_img.extend(images)
-                train_label.extend([malignancy for _ in range(len(images))])
-                if sublabels:
-                    train_subclasses.extend([subtype for _ in range(len(images))])
-            elif split and split_type == 1:
-                cv_img.append(image)
-                cv_label.append(malignancy)
-
-                if sublabels:
-                    cv_subclasses.append(subtype)
-            else:
-                test_img.append(image)
-                test_label.append(malignancy)
-
-                if sublabels:
-                    test_subclasses.append(subtype)
-
-                nodule_id.append(temp_nodule_id)
-
-    if sublabels:
-        train_data = (torch.stack(train_img), torch.stack(train_label), torch.stack(train_subclasses))
-        cv_data = (torch.stack(cv_img), torch.stack(cv_label), torch.stack(cv_subclasses))
-        test_data = (torch.stack(test_img), torch.stack(test_label), torch.stack(test_subclasses))
-    elif split:
-        train_data = (torch.stack(train_img), torch.stack(train_label))
-        cv_data = (torch.stack(cv_img), torch.stack(cv_label))
-        test_data = (torch.stack(test_img), torch.stack(test_label))
-    else:
-        test_data = (torch.stack(test_img), torch.stack(test_label))
-
-
-
-    if split:
-        return train_data, cv_data, test_data
-    else:
-        return nodule_id, test_data
-
 
 def get_features(feature_file='./data/erm_cluster_cnn_features_1.csv',
                  split_file='./data/subclass_labels/LIDC_data_split_with_cluster.csv', 
@@ -252,12 +154,13 @@ def get_features(feature_file='./data/erm_cluster_cnn_features_1.csv',
     df_splits = pd.read_csv(split_file, index_col=0)
     if images:
         if features is not None:
-            df_features = images_to_df(device=device)
+            df_features = images_to_df()
         else:
             df_features=features
-        df_features = df_features[df_features['noduleID'].isin(df_splits['noduleID'])]
     else:
         df_features = pd.read_csv(feature_file, index_col=0)
+
+    df_features = df_features[df_features['noduleID'].isin(df_splits['noduleID'])]
 
     #Sort most likely extraneous, but good for robustness
     df_features.sort_values('noduleID', inplace=True)
@@ -271,21 +174,23 @@ def get_features(feature_file='./data/erm_cluster_cnn_features_1.csv',
 
     datas = []
     for i,d in enumerate(dfs):
+
         if images:
 
-            #This is the training dataset
+            #If the training dataset, we need to do data augmentation
             if i == 0:
+
                 imgs = []
                 for img in d['image']:
                     imgs.extend(augment_image(img))
                 X = torch.stack(imgs).to(device=device, dtype=torch.float32)
+                
 
+                #hacky way to repeat the labels for the additional augmented images
                 augments = X.shape[0] // len(d)
-
                 d_temp = pd.DataFrame()
                 d_temp['malignancy_b'] = np.repeat(d['malignancy_b'].values, augments)
                 d_temp['clusters'] = np.repeat(d['clusters'].values, augments)
-
                 d=d_temp
 
             else:
