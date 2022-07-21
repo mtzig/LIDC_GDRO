@@ -68,7 +68,6 @@ elif subclass_column == 'malignancy':
     subtypes.extend(["Malignancy 1", "Malignancy 2", "Malignancy 4", "Malignancy 5"])
 else:
     subtypes.extend(list(range(num_subclasses)))
-print(subtypes)
 
 erm_class = ERMLoss
 erm_args = [None, torch.nn.CrossEntropyLoss()]

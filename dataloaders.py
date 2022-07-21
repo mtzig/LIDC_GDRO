@@ -24,11 +24,13 @@ class InfiniteDataLoader:
         super().__init__()
 
         if weights is not None:
-            sampler = torch.utils.data.WeightedRandomSampler(weights,
+            sampler = torch.utils.data.WeightedRandomSampler(
+                weights,
                 replacement=True,
                 num_samples=batch_size)
         else:
-            sampler = torch.utils.data.RandomSampler(dataset,
+            sampler = torch.utils.data.RandomSampler(
+                dataset,
                 replacement=True)
 
         batch_sampler = torch.utils.data.BatchSampler(
