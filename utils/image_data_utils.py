@@ -114,6 +114,36 @@ def augment_image(image):
     return image, image_90, image_180, image_270, image_f
 
 
+def images_to_df(image_folder='./data/LIDC(MaxSlices)_Nodules',
+                 image_labels='./data/LIDC_semantic_spiculation_malignancy.csv',
+                 image_dim=71,
+                 device='cpu'):
+    
+    LIDC_labels = pd.read_csv(image_labels, index_col=0)
+    scalar = scale_image(image_dim)
+
+    cols = {'noduleID': [], 'malignancy': [], 'image':[]}
+
+
+    for file in os.listdir(image_folder):
+        nodule_id = int(file.split('.')[0])
+        malignancy = get_malignancy(LIDC_labels,nodule_id,False,device)
+
+        image_raw = np.loadtxt(os.path.join(image_folder, file))
+        image_raw = torch.from_numpy(image_raw).to(device)
+        image_normed = get_normed(image_raw).unsqueeze(dim=0)
+        image = scalar(image_normed)
+
+        cols['noduleID'].append(nodule_id)
+        cols['malignancy'].append(malignancy)
+        cols['image'].append(image)
+
+    img_df = pd.DataFrame(cols)
+    img_df.sort_values('noduleID', inplace=True)
+    img_df.reset_index(drop=True, inplace=True)
+
+    return img_df
+
 def get_images(image_folder='./data/LIDC(MaxSlices)_Nodules_Subgrouped',
                data_split_file='./data/train_test_splits/LIDC_data_split.csv',
                lidc_subgroup_file='./data/subclass_labels/LIDC_data_split_with_cluster.csv',
@@ -212,22 +242,58 @@ def get_images(image_folder='./data/LIDC(MaxSlices)_Nodules_Subgrouped',
         return nodule_id, test_data
 
 
-def get_cnn_features(feature_file='./data/erm_cluster_cnn_features_1.csv',
-                     split_file='./data/subclass_labels/LIDC_data_split_with_cluster.csv', device='cpu', subclass='cluster'):
-    df_features = pd.read_csv(feature_file, index_col=0)
+def get_features(feature_file='./data/erm_cluster_cnn_features_1.csv',
+                 split_file='./data/subclass_labels/LIDC_data_split_with_cluster.csv', 
+                 images=False,
+                 features=None,
+                 device='cpu',
+                 subclass='cluster'):
+
     df_splits = pd.read_csv(split_file, index_col=0)
-    df = df_features.sort_values('noduleID')
-    df['clusters'] = df_splits[subclass]
-    df['malignancy_b'] = df_splits['malignancy_b']
+    if images:
+        if features is not None:
+            df_features = images_to_df(device=device)
+        else:
+            df_features=features
+        df_features = df_features[df_features['noduleID'].isin(df_splits['noduleID'])]
+    else:
+        df_features = pd.read_csv(feature_file, index_col=0)
+
+    #Sort most likely extraneous, but good for robustness
+    df_features.sort_values('noduleID', inplace=True)
+
+    df_features['clusters'] = df_splits[subclass]
+    df_features['malignancy_b'] = df_splits['malignancy_b']
 
     dfs = []
     for i in range(3):
-        dfs.append(df[df_splits['split'] == i])
+        dfs.append(df_features.loc[(df_splits['split'] == i).values])
 
     datas = []
-    for d in dfs:
-        X = torch.tensor(d.drop(['noduleID', 'clusters', 'malignancy_b'], axis=1).values,
+    for i,d in enumerate(dfs):
+        if images:
+
+            #This is the training dataset
+            if i == 0:
+                imgs = []
+                for img in d['image']:
+                    imgs.extend(augment_image(img))
+                X = torch.stack(imgs).to(device=device, dtype=torch.float32)
+
+                augments = X.shape[0] // len(d)
+
+                d_temp = pd.DataFrame()
+                d_temp['malignancy_b'] = np.repeat(d['malignancy_b'].values, augments)
+                d_temp['clusters'] = np.repeat(d['clusters'].values, augments)
+
+                d=d_temp
+
+            else:
+                X = torch.stack(list(d['image'])).to(device=device, dtype=torch.float32)
+        else:
+            X = torch.tensor(d.drop(['noduleID', 'clusters', 'malignancy_b'], axis=1).values,
                          device=device, dtype=torch.float32)
+
         y = torch.tensor(d['malignancy_b'].values, device=device)
         c = torch.tensor(d['clusters'].values, device=device)
         datas.append((X, y, c))
