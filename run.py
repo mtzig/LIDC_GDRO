@@ -43,7 +43,7 @@ test_name = args.test_name
 verbose = args.verbose
 
 if args.cnn:
-    train, val, test = image_data_utils.get_cnn_features(device=device, subclass=subclass_column)
+    train, val, test = image_data_utils.get_features(device=device, subclass=subclass_column)
     train_dataloader = data_utils.create_dataloader(train, batch_size, is_dataframe=False)
     val_dataloader = data_utils.create_dataloader(val, len(val), is_dataframe=False)
     test_dataloader = data_utils.create_dataloader(test, len(test), is_dataframe=False)
