@@ -190,6 +190,8 @@ class DynamicLoss:
         ERM_GDRO_losses[0] = torch.sum(losses)
         ERM_GDRO_losses[1] = torch.dot(losses, self.q) * self.num_subclasses
 
+        print(ERM_GDRO_losses)
+
         # update g
         if self.model.training:
             self.g *= torch.exp(self.gamma * ERM_GDRO_losses.data)
