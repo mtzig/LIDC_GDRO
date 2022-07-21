@@ -133,15 +133,15 @@ class ERMGDROLoss:
 
 
 class DynamicLoss:
-    def __init__(self, model, loss_fn, gdro_eta, mix_gamma, num_subclasses, initial=None):
+    def __init__(self, model, loss_fn, eta, gamma, num_subclasses, initial=None):
 
         if initial is None:
             initial = [0.5, 0.5]
         self.loss_fn = loss_fn
         self.model = model
 
-        self.gdro_eta = gdro_eta
-        self.mix_gamma = mix_gamma
+        self.eta = eta
+        self.gamma = gamma
 
         self.g = torch.tensor([])
         self.q = torch.tensor([])
@@ -181,7 +181,7 @@ class DynamicLoss:
 
         # update q
         if self.model.training:
-            self.q *= torch.exp(self.gdro_eta * losses.data)
+            self.q *= torch.exp(self.eta * losses.data)
             self.q /= self.q.sum()
 
         # normalize loss
@@ -192,7 +192,7 @@ class DynamicLoss:
 
         # update g
         if self.model.training:
-            self.g *= torch.exp(self.mix_gamma * ERM_GDRO_losses.data)
+            self.g *= torch.exp(self.gamma * ERM_GDRO_losses.data)
             self.g /= torch.sum(self.g)
 
         loss = torch.dot(ERM_GDRO_losses, self.g)

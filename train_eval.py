@@ -28,7 +28,6 @@ def train(dataloader, model, loss_fn, optimizer, verbose=False):
 
 def evaluate(dataloader, model, num_subclasses, verbose=False):
     model.eval()
-    steps_per_epoch = dataloader.batches_per_epoch()
 
     num_samples = np.zeros(num_subclasses)
     subgroup_correct = np.zeros(num_subclasses)
@@ -105,7 +104,8 @@ def run_trials(num_trials,
                test_dataloader,
                model_class,
                model_args,
-               loss_fn,
+               loss_class,
+               loss_args,
                optimizer_class,
                optimizer_args,
                device='cpu',
@@ -119,9 +119,9 @@ def run_trials(num_trials,
         roc_data = [None, None]
         q_data = None
         g_data = None
-        if isinstance(loss_fn, GDROLoss):
+        if loss_class is GDROLoss:
             q_data = []
-        if isinstance(loss_fn, DynamicLoss):
+        if loss_class is DynamicLoss:
             q_data = []
             g_data = []
 
@@ -130,7 +130,8 @@ def run_trials(num_trials,
             print(f"Trial {n + 1}/{num_trials}")
 
         model = model_class(*model_args).to(device)
-        loss_fn.model = model
+        loss_args[0] = model
+        loss_fn = loss_class(*loss_args)
         optimizer = optimizer_class(model.parameters(), **optimizer_args)
 
         trial_results = train_epochs(epochs,
