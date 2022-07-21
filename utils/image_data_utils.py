@@ -151,6 +151,7 @@ def get_features(feature_file='./data/erm_cluster_cnn_features_1.csv',
                  subclass='cluster'):
 
     df_splits = pd.read_csv(split_file, index_col=0)
+    df_splits.reset_index(drop=True, inplace=True)
 
     if images:
         if features is None:
