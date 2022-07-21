@@ -28,6 +28,10 @@ results_dir = f'cluster_{now.strftime("%Y%m%d_%H%M%S")}'
 images_df = images_to_df()
 train_data, cv_data, test_data = get_features(images=True, features=images_df, device=DEVICE, subclass='malignancy')
 
+#file with splits
+df_splits = pd.read_csv('./data/train_test_splits/LIDC_data_split.csv', index_col=0)
+
+
 #datasets
 tr = SubclassedDataset(*train_data)
 cv = SubclassedDataset(*cv_data)
@@ -39,16 +43,14 @@ cv_loader = InfiniteDataLoader(cv, len(cv))
 tst_loader = InfiniteDataLoader(tst, len(tst))
 
 
-def run_model():
+def train_model(model):
     
-    model = TransferModel18(device=DEVICE, pretrained=True, freeze=False)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0005, weight_decay=0.005)
     epochs = 20
     loss_fn = ERMLoss(model, torch.nn.CrossEntropyLoss())
     train_epochs(epochs, tr_loader, tst_loader, model, loss_fn, optimizer, 
-                 scheduler=ReduceLROnPlateau(optimizer, mode='max', factor=0.2, patience=2, verbose=True), verbose=True, num_subclasses=4)
+                 scheduler=ReduceLROnPlateau(optimizer, mode='max', factor=0.2, patience=2, verbose=False), verbose=False, num_subclasses=4)
 
-    return model
 
 def get_features(model):
 
@@ -80,7 +82,9 @@ def run_clustering():
 
     cluster_stats = pd.DataFrame()
 
-    model = run_model()
+    print('Training Model')
+    model = TransferModel18(device=DEVICE, pretrained=True, freeze=False)
+    train_model(model)
 
     #base model accuracies
     accuracies = evaluate(tst_loader,model, 4, verbose=True)
@@ -90,6 +94,7 @@ def run_clustering():
     #get features
     noduleID, img_features = get_features(model)
 
+    print('Collecting features')
     #collect features
     cols = []
     for idx,id in enumerate(noduleID):
@@ -114,6 +119,7 @@ def run_clustering():
     train_features = df_features_train.drop(['noduleID', 'split', 'malignancy'], axis=1).values
     cv_test_features = df_features_cv_test.drop(['noduleID', 'split', 'malignancy'], axis=1).values
 
+    print('Reducing Features')
     #reduce features
     reducer = UMAP(random_state=8)
     reducer.fit(train_features)
@@ -124,13 +130,14 @@ def run_clustering():
     train_embeds_malig = reducer.transform(train_features[df_features_train['malignancy'] > 1])
     train_embeds_benign = reducer.transform(train_features[df_features_train['malignancy'] < 2])
 
-
+    print('calculating silhouettes')
     #calculate silhouette_coefficients
     silhouette_coefficients = check_cluster(train_embeds_malig)
     if silhouette_coefficients[0] != max(silhouette_coefficients):
         return False
     cluster_stats['silhouettes'] = silhouette_coefficients
 
+    print('clustering')
     #final clusterer
     clusterer = GaussianMixture(n_components=2, random_state=61).fit(train_embeds_malig)
 
@@ -139,6 +146,7 @@ def run_clustering():
     if min(sum(malig_lables==0), sum(malig_lables==1)) < 50:
         return False
 
+    print('getting labels')
     train_labels = clusterer.predict(train_embeds)
     cv_test_labels = clusterer.predict(cv_test_embeds)
 
@@ -155,7 +163,7 @@ def run_clustering():
     df_features_train['cluster'] = train_labels
     df_features_cv_test['cluster'] = cv_test_labels
 
-    df_splits = pd.read_csv('./data/train_test_splits/LIDC_data_split.csv', index_col=0)
+    print('writing to file')
 
     df_clusters = pd.concat([df_features_train, df_features_cv_test])[['noduleID', 'cluster']]
     df_clusters.sort_values('noduleID', inplace=True)
@@ -183,4 +191,5 @@ if __name__ == "__main__":
 
     found_good_cluster = False
     while not found_good_cluster:
+        print('Run script')
         found_good_cluster = run_clustering()
