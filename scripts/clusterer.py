@@ -170,7 +170,7 @@ def run_clustering():
     df_clusters = pd.concat([df_features_train, df_features_cv_test])[['noduleID', 'cluster']]
     df_clusters.sort_values('noduleID', inplace=True)
     df_clusters.reset_index(drop=True, inplace=True)
-    df_splits['cluster'] = [ 0 if m % 2 == 0 else 1 + c for m,c in zip(df_splits['malignancy_b'], df_clusters['cluster'])]
+    df_splits['cluster'] = [ 2 * m + c for m,c in zip(df_splits['malignancy_b'], df_clusters['cluster'])]
 
 
 
