@@ -8,12 +8,11 @@ from datetime import datetime
 import os
 import argparse
 
-verbose = True
-
 parser = argparse.ArgumentParser()
 parser.add_argument('subclass_column')
 parser.add_argument('--test_name', default='test')
 parser.add_argument('--cnn', action='store_true')
+parser.add_argument('--verbose', action='store_true')
 
 args = parser.parse_args()
 
@@ -41,8 +40,10 @@ results_root_dir = 'test_results/standardized/'
 
 test_name = args.test_name
 
+verbose = args.verbose
+
 if args.cnn:
-    train, val, test = image_data_utils.get_cnn_features(device=device)
+    train, val, test = image_data_utils.get_features(device=device, subclass=subclass_column)
     train_dataloader = data_utils.create_dataloader(train, batch_size, is_dataframe=False)
     val_dataloader = data_utils.create_dataloader(val, len(val), is_dataframe=False)
     test_dataloader = data_utils.create_dataloader(test, len(test), is_dataframe=False)
@@ -68,10 +69,14 @@ elif subclass_column == 'malignancy':
 else:
     subtypes.extend(list(range(num_subclasses)))
 
-erm = ERMLoss(None, torch.nn.CrossEntropyLoss())
-gdro = GDROLoss(None, torch.nn.CrossEntropyLoss(), eta, num_subclasses)
-dynamic = DynamicLoss(None, torch.nn.CrossEntropyLoss(), eta, gamma, num_subclasses)
-upweight = UpweightLoss(None, torch.nn.CrossEntropyLoss(), num_subclasses)
+erm_class = ERMLoss
+erm_args = [None, torch.nn.CrossEntropyLoss()]
+gdro_class = GDROLoss
+gdro_args = [None, torch.nn.CrossEntropyLoss(), eta, num_subclasses]
+dynamic_class = DynamicLoss
+dynamic_args = [None, torch.nn.CrossEntropyLoss(), eta, gamma, num_subclasses]
+upweight_class = UpweightLoss
+upweight_args = [None, torch.nn.CrossEntropyLoss(), num_subclasses]
 
 if args.cnn:
     model_args = [512, 64, 36, 2]
@@ -81,8 +86,8 @@ optimizer_args = {'lr': lr, 'weight_decay': wd}
 
 results = {"Accuracies": {}, "q": {}, "g": {}, "ROC": {}}
 
-for loss_fn in [erm, gdro, dynamic, upweight]:
-    fn_name = loss_fn.__class__.__name__
+for loss_class, loss_args in zip([erm_class, gdro_class, dynamic_class, upweight_class], [erm_args, gdro_args, dynamic_args, upweight_args]):
+    fn_name = loss_class.__name__
 
     if verbose:
         print(f"Running trials: {fn_name}")
@@ -94,7 +99,8 @@ for loss_fn in [erm, gdro, dynamic, upweight]:
         test_dataloader=test_dataloader,
         model_class=model_class,
         model_args=model_args,
-        loss_fn=loss_fn,
+        loss_class=loss_class,
+        loss_args=loss_args,
         optimizer_class=optimizer_class,
         optimizer_args=optimizer_args,
         device=device,
@@ -106,8 +112,8 @@ for loss_fn in [erm, gdro, dynamic, upweight]:
     results["Accuracies"][fn_name] = accuracies
     results["q"][fn_name] = q_data
     results["g"][fn_name] = g_data
-    results["ROC"][fn_name] = roc_data[0].tolist()
     results["ROC"]["labels"] = roc_data[1].tolist()
+    results["ROC"][fn_name] = roc_data[0].tolist()
 
 accuracies_df = pd.DataFrame(
     results["Accuracies"],
@@ -124,10 +130,10 @@ q_df = pd.DataFrame(
     )
 )
 g_df = pd.DataFrame(
-    results["q"],
+    results["g"],
     index=pd.MultiIndex.from_product(
-        [range(trials), range(epochs), subtypes[1:]],
-        names=["trial", "epoch", "subtype"]
+        [range(trials), range(epochs), ["ERM Weight", "GDRO Weight"]],
+        names=["trial", "epoch", "loss_fn"]
     )
 )
 roc_df = pd.DataFrame(results["ROC"])
@@ -140,4 +146,4 @@ os.mkdir(results_dir)
 accuracies_df.to_csv(results_dir + f'accuracies.csv')
 q_df.to_csv(results_dir + f'q.csv')
 g_df.to_csv(results_dir + f'g.csv')
-roc_df.to_csv(results_dir + f'roc.csv')
+roc_df.to_csv(results_dir + f'roc.csv', index=False)
