@@ -71,18 +71,17 @@ def scale_image(image_dim, upscale_amount=None, crop_change=None):
     return scalar
 
 
-def get_malignancy(lidc_df, nodule_id, binary, device):
+def get_malignancy(lidc_df, nodule_id, binary):
     malignancy = lidc_df[lidc_df['noduleID'] == nodule_id]['malignancy'].iloc[0]
     if binary:
-        return torch.tensor(1, device=device) if malignancy > 1 else torch.tensor(0, device=device)
+        return torch.tensor(1, device=device) if malignancy > 1 else torch.tensor(0)
 
-    return torch.tensor(malignancy, device=device) if malignancy > 1 else torch.tensor(malignancy,
-                                                                                           device=device)
+    return torch.tensor(malignancy) if malignancy > 1 else torch.tensor(malignancy)
 
 
-def get_subclass(lidc_df, nodule_id, sublabels, device):
+def get_subclass(lidc_df, nodule_id, sublabels):
     subtype = lidc_df[lidc_df['noduleID'] == nodule_id][sublabels].iloc[0]
-    return torch.tensor(subtype, device=device)
+    return torch.tensor(subtype)
     # if subtype == 'marked_benign':
     #     return torch.tensor(0, device=device)
     # elif subtype == 'unmarked_benign':
@@ -93,8 +92,8 @@ def get_subclass(lidc_df, nodule_id, sublabels, device):
     #     return torch.tensor(3, device=device)
 
 
-def get_data_split(train_test_df, nodule_id, device):
-    return torch.tensor(train_test_df[train_test_df['noduleID'] == nodule_id]['split'].iloc[0], device=device)
+def get_data_split(train_test_df, nodule_id):
+    return torch.tensor(train_test_df[train_test_df['noduleID'] == nodule_id]['split'].iloc[0])
 
 
 def augment_image(image):
