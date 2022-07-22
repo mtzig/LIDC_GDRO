@@ -155,7 +155,7 @@ def do_clustering(tr_loader, cv_loader, tst_loader, images_df, device='cpu'):
         train_e, cv_test_e = reducer.transform(train_f[0]), reducer.transform(cv_test_f[0])
 
         silhouette_scores = check_cluster(train_e, max_clusters=15)
-        if max(silhouette_score) != silhouette_score[0]:
+        if max(silhouette_scores) != silhouette_scores[0]:
             print('bad silhouette score, restarting process...')
             return None
         
