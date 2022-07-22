@@ -13,8 +13,7 @@ from loss import ERMLoss, GDROLoss
 from torchvision import transforms
 import torch
 from utils.image_data_utils import images_to_df, get_features, show_scatter
-from utils.cluster_utils import *#train_erm_cluster, extract_features, features_to_df, split_features, check_cluster, get_embeds
-from umap import UMAP
+from utils.cluster_utils import do_clustering
 from matplotlib import pyplot as plt
 import pickle
 from sklearn.mixture import GaussianMixture
@@ -65,6 +64,18 @@ if __name__ == "__main__":
 
     while True:
 
-        a = do_clustering(tr_loader, cv_loader, tst_loader, images_df, DEVICE)
+        results = do_clustering(tr_loader, cv_loader, tst_loader, images_df, device=DEVICE)
+        if results is None:
+            continue
+        
+
+        label_df, embeds, silhouette_scores = results
+        malig_plot = show_scatter(embeds[0][:,0], embeds[0][:,1], embeds[1], 'train embeds labeled by malignancy', s=0.05 )
+        cluster_plot = show_scatter(embeds[0][:,0], embeds[0][:,1], embeds[2], 'train embeds labeled by cluster', s=0.05 )
+
+        label_df.to_csv(f'./data/{results_dir}/cluster_labels')
+
+        malig_plot.savefig(f'./data/{results_dir}/malig_plot.png')
+        cluster_plot.savefig(f'./data/{results_dir}/cluster_plot.png')
 
         

@@ -137,12 +137,12 @@ def get_splits_with_cluster():
     df_clusters = pd.concat([df_features_train, df_features_cv_test])[['noduleID', 'cluster']]
     df_clusters.sort_values('noduleID', inplace=True)
 
-def do_clustering(tr_loader, cv_loader, tst_loader, images_df, DEVICE):
+def do_clustering(tr_loader, cv_loader, tst_loader, images_df, device='cpu'):
 
-        model=TransferModel18(pretrained=True, freeze=False, device=DEVICE)
-        train_erm_cluster(model, device=DEVICE, loaders=(tr_loader, cv_loader, tst_loader))
+        model=TransferModel18(pretrained=True, freeze=False, device=device)
+        train_erm_cluster(model, device=device, loaders=(tr_loader, cv_loader, tst_loader))
 
-        noduleID, features = extract_features(model, images_df=images_df, device=DEVICE)
+        noduleID, features = extract_features(model, images_df=images_df, device=device)
 
         df_features_all = features_to_df(noduleID, features)
 
@@ -157,7 +157,7 @@ def do_clustering(tr_loader, cv_loader, tst_loader, images_df, DEVICE):
         silhouette_scores = check_cluster(train_e, max_clusters=15)
         if max(silhouette_score) != silhouette_score[0]:
             print('bad silhouette score, restarting process...')
-            return False
+            return None
         
         #We only cluster on malignat embeds
         train_malig_e = train_e[train_f[1] > 1]
@@ -166,8 +166,8 @@ def do_clustering(tr_loader, cv_loader, tst_loader, images_df, DEVICE):
         train_l, cv_test_l = clusterer.predict(train_e), clusterer.predict(cv_test_e)
 
         if min(sum(train_l[train_f[1] > 1] == 1), sum(train_l[train_f[1] > 1]==0)) < 50:
-            print('bad generated clusters, restaring process...')
-            return False
+            print('bad generated clusters, restarting process...')
+            return None
 
         #we want benign to be 0
         if sum(train_l[train_f[1] < 2]==1) > sum(train_l[train_f[1] < 2]==0):
@@ -178,4 +178,4 @@ def do_clustering(tr_loader, cv_loader, tst_loader, images_df, DEVICE):
         
         label_df = pd.DataFrame({'noduleID':noduleIDs, 'clusters':labels})
 
-        return label_df, (train_e, cv_test_e), silhouette_scores
+        return label_df, (train_e, train_f[1], train_l), silhouette_scores
