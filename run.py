@@ -28,7 +28,7 @@ optimizer_class = torch.optim.Adam
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-trials = 100
+trials = 1
 epochs = 100
 batch_size = 128
 split_path = 'train_test_splits/LIDC_data_split.csv'
@@ -86,7 +86,8 @@ optimizer_args = {'lr': lr, 'weight_decay': wd}
 
 results = {"Accuracies": {}, "q": {}, "g": {}, "ROC": {}}
 
-for loss_class, loss_args in zip([erm_class, gdro_class, dynamic_class, upweight_class], [erm_args, gdro_args, dynamic_args, upweight_args]):
+# for loss_class, loss_args in zip([erm_class, gdro_class, dynamic_class, upweight_class], [erm_args, gdro_args, dynamic_args, upweight_args]):
+for loss_class, loss_args in zip([dynamic_class], [dynamic_args]):
     fn_name = loss_class.__name__
 
     if verbose:
