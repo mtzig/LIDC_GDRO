@@ -17,7 +17,6 @@ from utils.cluster_utils import do_clustering
 from matplotlib import pyplot as plt
 import pickle
 from sklearn.mixture import GaussianMixture
-from sklearn.metrics import silhouette_score, check_cluster
 from datetime import datetime
 from scipy.stats import mode
 
