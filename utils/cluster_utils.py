@@ -70,7 +70,7 @@ def extract_features(model, images_df=None, device='cpu'):
         return hook
 
 
-    model.model.avgpool.register_forward_hook(get_activation(activation,'avgpool'))
+    model.model.avgpool.register_forward_hook(get_activation('avgpool'))
     model(data)
 
     return noduleID, activation['avgpool'].squeeze()
