@@ -173,8 +173,8 @@ def do_clustering(tr_loader, cv_loader, tst_loader, images_df, device='cpu'):
         if sum(train_l[train_f[1] < 2]==1) > sum(train_l[train_f[1] < 2]==0):
             train_l, cv_test_l = 1 - train_l, 1 - cv_test_l
         
-        labels = np.concatenate(train_l, cv_test_l, axis=0)
-        noduleIDs = np.concatenate(train_f[2], cv_test_f[2], axis=0)
+        labels = np.concatenate((train_l, cv_test_l), axis=0)
+        noduleIDs = np.concatenate((train_f[2], cv_test_f[2]), axis=0)
         
         label_df = pd.DataFrame({'noduleID':noduleIDs, 'clusters':labels})
 
