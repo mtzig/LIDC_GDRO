@@ -44,8 +44,6 @@ if __name__ == "__main__":
 
     #make unique directory to store results
     now = datetime.now()
-    results_dir = f'cluster_results/cluster_{now.strftime("%Y%m%d_%H%M%S")}'
-    os.mkdir(f'./data/{results_dir}')
 
     images_df = images_to_df()
     train_data, cv_data, test_data = get_features(images=True, features=images_df, device=DEVICE, subclass='malignancy')
@@ -61,7 +59,8 @@ if __name__ == "__main__":
     cv_loader = InfiniteDataLoader(cv, len(cv))
     tst_loader = InfiniteDataLoader(tst, len(tst))
 
-    while True:
+    counts = 0
+    while counts < 10:
 
         results = do_clustering(tr_loader, cv_loader, tst_loader, images_df, device=DEVICE)
         if results is None:
@@ -72,9 +71,14 @@ if __name__ == "__main__":
         malig_plot = show_scatter(embeds[0][:,0], embeds[0][:,1], embeds[1], 'train embeds labeled by malignancy', 0.5 )
         cluster_plot = show_scatter(embeds[0][:,0], embeds[0][:,1], embeds[2], 'train embeds labeled by cluster', 0.5 )
 
+        results_dir = f'cluster_results/cluster_{now.strftime("%Y%m%d_%H%M%S")}'
+        os.mkdir(f'./data/{results_dir}')
+
         label_df.to_csv(f'./data/{results_dir}/cluster_labels')
 
         malig_plot.savefig(f'./data/{results_dir}/malig_plot.png')
         cluster_plot.savefig(f'./data/{results_dir}/cluster_plot.png')
+
+        counts += 1
 
         
