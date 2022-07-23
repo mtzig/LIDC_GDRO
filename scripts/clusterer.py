@@ -69,8 +69,8 @@ if __name__ == "__main__":
         
 
         label_df, embeds, silhouette_scores = results
-        malig_plot = show_scatter(embeds[0][:,0], embeds[0][:,1], embeds[1], 'train embeds labeled by malignancy', s=0.05 )
-        cluster_plot = show_scatter(embeds[0][:,0], embeds[0][:,1], embeds[2], 'train embeds labeled by cluster', s=0.05 )
+        malig_plot = show_scatter(embeds[0][:,0], embeds[0][:,1], embeds[1], 'train embeds labeled by malignancy', 0.5 )
+        cluster_plot = show_scatter(embeds[0][:,0], embeds[0][:,1], embeds[2], 'train embeds labeled by cluster', 0.5 )
 
         label_df.to_csv(f'./data/{results_dir}/cluster_labels')
 
