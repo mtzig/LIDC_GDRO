@@ -165,13 +165,28 @@ def do_clustering(tr_loader, cv_loader, tst_loader, images_df, device='cpu'):
 
         train_l, cv_test_l = clusterer.predict(train_e), clusterer.predict(cv_test_e)
 
-        if min(sum(train_l[train_f[1] > 1] == 1), sum(train_l[train_f[1] > 1]==0)) < 50:
+        size_0 = sum(train_l[train_f[1] > 1] == 0)
+        size_1 = sum(train_l[train_f[1] > 1] == 1)
+        
+        if min(size_0, size_1)) < 50:
             print('bad generated clusters, restarting process...')
             return None
+        
+        #find well defined group
+        malig_counts_0 = sum(train_l[train_f[1] == 3] == 0)
+        malig_counts_1 = sum(train_l[train_f[1] == 3] == 1)
+        defined_group = 0 if malig_counts_0 > malig_counts_1 else 1
 
-        #we want benign to be 0
-        if sum(train_l[train_f[1] < 2]==1) > sum(train_l[train_f[1] < 2]==0):
-            train_l, cv_test_l = 1 - train_l, 1 - cv_test_l
+        #set malignant groups
+        train_l[train_l == defined_group] = 2
+        train_l[train_l == (1-defined_group)] = 1
+
+        cv_test_l[cv_test_l == defined_group] = 2
+        cv_test_l[cv_test_l == (1-defined_group)] = 1
+
+        #set all benign to 0
+        train_l[train_f[1] < 2] = 0
+        cv_test_l[train_f[1]<2] = 0
         
         labels = np.concatenate((train_l, cv_test_l), axis=0)
         noduleIDs = np.concatenate((train_f[2], cv_test_f[2]), axis=0)
