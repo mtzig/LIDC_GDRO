@@ -247,6 +247,7 @@ def show_scatter(component_0, component_1, group, title, size, save=None):
     ax.legend()
     plt.title(title)
 
+    fig = plt.gcf()
+    plt.show()
 
-
-    return plt.figure()
+    return fig
