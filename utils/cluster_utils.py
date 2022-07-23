@@ -168,7 +168,7 @@ def do_clustering(tr_loader, cv_loader, tst_loader, images_df, device='cpu'):
         size_0 = sum(train_l[train_f[1] > 1] == 0)
         size_1 = sum(train_l[train_f[1] > 1] == 1)
         
-        if min(size_0, size_1)) < 50:
+        if min(size_0, size_1) < 50:
             print('bad generated clusters, restarting process...')
             return None
         
