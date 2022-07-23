@@ -186,7 +186,7 @@ def do_clustering(tr_loader, cv_loader, tst_loader, images_df, device='cpu'):
 
         #set all benign to 0
         train_l[train_f[1] < 2] = 0
-        cv_test_l[train_f[1]<2] = 0
+        cv_test_l[cv_test_f[1]<2] = 0
         
         labels = np.concatenate((train_l, cv_test_l), axis=0)
         noduleIDs = np.concatenate((train_f[2], cv_test_f[2]), axis=0)
