@@ -144,7 +144,8 @@ def images_to_df(image_folder='./data/LIDC(MaxSlices)_Nodules',
 
 
 def get_features(feature_file='./data/erm_cluster_cnn_features_1.csv',
-                 split_file='./data/subclass_labels/LIDC_data_split_with_cluster.csv', 
+                 split_file='./data/subclass_labels/LIDC_data_split_with_cluster.csv',
+                 subclass_file='./data/subclass_labels/mode_label.csv',
                  images=False,
                  features=None,
                  device='cpu',
@@ -152,6 +153,9 @@ def get_features(feature_file='./data/erm_cluster_cnn_features_1.csv',
 
     df_splits = pd.read_csv(split_file, index_col=0)
     df_splits.reset_index(drop=True, inplace=True)
+
+    df_subclass = pd.read_csv(subclass_file, index_col=0)
+    df_subclass.reset_index(drop=True, inplace=True)
 
     if images:
         if features is None:
@@ -167,7 +171,7 @@ def get_features(feature_file='./data/erm_cluster_cnn_features_1.csv',
     df_features.sort_values('noduleID', inplace=True)
     df_features.reset_index(drop=True, inplace=True)
 
-    df_features['clusters'] = df_splits[subclass]
+    df_features['clusters'] = df_subclass[subclass]
     df_features['malignancy_b'] = df_splits['malignancy_b']
 
 
