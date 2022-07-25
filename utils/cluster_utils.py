@@ -145,8 +145,8 @@ def get_cluster_label(t_e, cvt_e, t_f, easy_malig, easy, hard):
     train_l, cv_test_l = clusterer.predict(t_e), clusterer.predict(cvt_e)
 
 
-    size_0 = sum(t_f[t_f > 1] == 0)
-    size_1 = sum(t_l[t_f > 1] == 1)
+    size_0 = sum(train_l[t_f > 1] == 0)
+    size_1 = sum(train_l[t_f > 1] == 1)
 
     if min(size_0, size_1) < 50:
         print('bad generated clusters, restarting process...')
