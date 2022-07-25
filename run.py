@@ -19,7 +19,7 @@ args = parser.parse_args()
 # hyperparameters
 
 lr = 0.0005
-wd = 1.0
+wd = 0.005
 eta = 0.01
 gamma = 1.0
 
@@ -28,7 +28,7 @@ optimizer_class = torch.optim.Adam
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-trials = 1
+trials = 10
 epochs = 100
 batch_size = 128
 split_path = 'train_test_splits/LIDC_data_split.csv'
@@ -75,6 +75,7 @@ gdro_class = GDROLoss
 gdro_args = [None, torch.nn.CrossEntropyLoss(), eta, num_subclasses]
 dynamic_class = DynamicLoss
 dynamic_args = [None, torch.nn.CrossEntropyLoss(), eta, gamma, num_subclasses]
+dynamic_soft_args = [None, torch.nn.CrossEntropyLoss(), eta, gamma, num_subclasses, None, torch.nn.Softmax(dim=0)]
 upweight_class = UpweightLoss
 upweight_args = [None, torch.nn.CrossEntropyLoss(), num_subclasses]
 
@@ -86,8 +87,8 @@ optimizer_args = {'lr': lr, 'weight_decay': wd}
 
 results = {"Accuracies": {}, "q": {}, "g": {}, "ROC": {}}
 
-# for loss_class, loss_args in zip([erm_class, gdro_class, dynamic_class, upweight_class], [erm_args, gdro_args, dynamic_args, upweight_args]):
-for loss_class, loss_args in zip([dynamic_class], [dynamic_args]):
+for loss_class, loss_args in zip([erm_class, gdro_class, dynamic_class, upweight_class], [erm_args, gdro_args, dynamic_args, upweight_args]):
+# for loss_class, loss_args in zip([dynamic_class], [dynamic_args]):
     fn_name = loss_class.__name__
 
     if verbose:
