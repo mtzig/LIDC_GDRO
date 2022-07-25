@@ -161,10 +161,11 @@ def get_cluster_label(t_e, cvt_e, t_f, easy_malig, easy, hard):
 
     cvt_e_i = cv_test_l == defined_group
     cvt_h_i = cv_test_l == (1-defined_group)
-    
+
     cv_test_l[cvt_e_i] = easy
     cv_test_l[cvt_h_i] = hard
     
+        
     return train_l, cv_test_l
 
 def do_clustering(tr_loader, cv_loader, tst_loader, images_df, device='cpu'):
