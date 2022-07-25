@@ -233,7 +233,7 @@ def train_epochs(epochs, train_loader, val_loader, model, loss_fn, scheduler=Tru
             scheduler.step(accuracies[0])
 
 
-def show_scatter(component_0, component_1, group, title, size):
+def show_scatter(component_0, component_1, group, title, size, save=None):
     fig, ax = plt.subplots()
     group = group
     component_0 = component_0
@@ -246,4 +246,8 @@ def show_scatter(component_0, component_1, group, title, size):
 
     ax.legend()
     plt.title(title)
+
+    fig = plt.gcf()
     plt.show()
+
+    return fig

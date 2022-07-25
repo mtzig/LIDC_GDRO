@@ -1,6 +1,5 @@
 import torch
 
-
 class GDROLoss:
     """
     GDROLoss function to be used with SubclassedNoduleDataset

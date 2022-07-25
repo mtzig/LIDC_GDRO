@@ -20,25 +20,6 @@ from datetime import datetime
 from scipy.stats import mode
 
 
-def get_activation(name):
-    '''
-    Hooks used to extract CNN activation
-    '''
-    def hook(model, input, output):
-        activation[name] = output.detach()
-    return hook
-
-def collect_features(model), images_df=None):
-    if images_df is None:
-        images_df = images_to_df()
-    activation = {}
-
-    model.model.avgpool.register_forward_hook(get_activation('avgpool'))
-    noduleID, data = images_df['noduleID'], torch.stack(list(images_df['image'])).to(DEVICE)
-    model(data)
-
-    return noduleID, activation['avgpool'].squeeze()
-
 def train_erm_cluster(model, device='cpu', loaders=None):
     '''
     Trains a default ERM model on LIDC
@@ -71,4 +52,145 @@ def train_erm_cluster(model, device='cpu', loaders=None):
     train_epochs(epochs, tr_loader, tst_loader, model, loss_fn, optimizer, 
                  scheduler=scheduler, verbose=False, num_subclasses=4)
     
-    return model
+
+def extract_features(model, images_df=None, device='cpu'):
+    '''
+    extract features of model
+    '''
+
+    if images_df is None:
+        images_df = images_to_df()
+
+    noduleID, data = images_df['noduleID'], torch.stack(list(images_df['image'])).to(device)
+
+    activation = {}
+    def get_activation(name):
+        def hook(model, input, output):
+            activation[name] = output.detach()
+        return hook
+
+
+    model.model.avgpool.register_forward_hook(get_activation('avgpool'))
+    model(data)
+
+    return noduleID, activation['avgpool'].squeeze()
+
+def features_to_df(noduleID, features):
+
+    ids = np.asarray(noduleID).reshape(-1,1)
+    feats = features.cpu().numpy()
+    cols = np.concatenate((ids, feats), axis=1)
+
+    # Get features of all images
+    df_features_all = pd.DataFrame(cols).rename({0:'noduleID'}, axis=1)
+    df_features_all.sort_values('noduleID', inplace=True)
+    df_features_all.reset_index(drop=True, inplace=True)
+
+
+    return df_features_all
+
+def split_features(df_features_all, splits_path='./data/train_test_splits/LIDC_data_split.csv'):
+    
+    df_splits = pd.read_csv(splits_path, index_col=0)
+
+    # Get features of only determinate nodules
+    df_features = df_features_all[df_features_all['noduleID'].isin(df_splits['noduleID'])]
+    # df_features.sort_values('noduleID', inplace=True)
+    df_features.reset_index(drop=True, inplace=True)
+
+    train_idx = df_splits['split'] == 0
+    cv_test_idx = df_splits['split'] != 0
+
+    df_features_train = df_features[train_idx]
+    df_features_cv_test = df_features[cv_test_idx]
+
+
+    train_features = df_features_train.drop(['noduleID'], axis=1).values
+    cv_test_features = df_features_cv_test.drop(['noduleID'], axis=1).values
+
+    train_malignancy = df_splits[train_idx]['malignancy'].values
+    cv_test_malignancy = df_splits[cv_test_idx]['malignancy'].values
+
+    train_id =df_splits[train_idx]['noduleID'].values
+    cv_test_id =df_splits[cv_test_idx]['noduleID'].values
+
+
+    return (train_features, train_malignancy, train_id), (cv_test_features, cv_test_malignancy, cv_test_id)
+
+def check_cluster(embeds, max_clusters=15):
+    clusters = [n for n in range(2,max_clusters+1)]
+    silhouette_coefficients = []
+
+    for cluster in clusters:
+        gmm = GaussianMixture(n_components=cluster, random_state=61).fit(embeds)
+        labels = gmm.predict(embeds)
+    
+        silhouette_avg = silhouette_score(embeds, labels)
+        silhouette_coefficients.append(silhouette_avg)
+
+    return silhouette_coefficients
+
+def get_splits_with_cluster():
+    df_features_train['cluster'] = train_labels
+    df_features_cv_test['cluster'] = cv_test_labels
+
+    df_clusters = pd.concat([df_features_train, df_features_cv_test])[['noduleID', 'cluster']]
+    df_clusters.sort_values('noduleID', inplace=True)
+
+def do_clustering(tr_loader, cv_loader, tst_loader, images_df, device='cpu'):
+
+        model=TransferModel18(pretrained=True, freeze=False, device=device)
+        train_erm_cluster(model, device=device, loaders=(tr_loader, cv_loader, tst_loader))
+
+        noduleID, features = extract_features(model, images_df=images_df, device=device)
+
+        df_features_all = features_to_df(noduleID, features)
+
+        #features and corresponding malignancy, noduleID
+        train_f, cv_test_f = split_features(df_features_all)
+
+        reducer = UMAP(random_state=8)
+        reducer.fit(train_f[0])
+
+        train_e, cv_test_e = reducer.transform(train_f[0]), reducer.transform(cv_test_f[0])
+
+        silhouette_scores = check_cluster(train_e, max_clusters=15)
+        if max(silhouette_scores) != silhouette_scores[0]:
+            print('bad silhouette score, restarting process...')
+            return None
+        
+        #We only cluster on malignat embeds
+        train_malig_e = train_e[train_f[1] > 1]
+        clusterer = GaussianMixture(n_components=2, random_state=61).fit(train_malig_e)
+
+        train_l, cv_test_l = clusterer.predict(train_e), clusterer.predict(cv_test_e)
+
+        size_0 = sum(train_l[train_f[1] > 1] == 0)
+        size_1 = sum(train_l[train_f[1] > 1] == 1)
+        
+        if min(size_0, size_1) < 50:
+            print('bad generated clusters, restarting process...')
+            return None
+        
+        #find well defined group
+        malig_counts_0 = sum(train_l[train_f[1] == 3] == 0)
+        malig_counts_1 = sum(train_l[train_f[1] == 3] == 1)
+        defined_group = 0 if malig_counts_0 > malig_counts_1 else 1
+
+        #set malignant groups
+        train_l[train_l == defined_group] = 2
+        train_l[train_l == (1-defined_group)] = 1
+
+        cv_test_l[cv_test_l == defined_group] = 2
+        cv_test_l[cv_test_l == (1-defined_group)] = 1
+
+        #set all benign to 0
+        train_l[train_f[1] < 2] = 0
+        cv_test_l[cv_test_f[1]<2] = 0
+        
+        labels = np.concatenate((train_l, cv_test_l), axis=0)
+        noduleIDs = np.concatenate((train_f[2], cv_test_f[2]), axis=0)
+        
+        label_df = pd.DataFrame({'noduleID':noduleIDs, 'clusters':labels})
+
+        return label_df, (train_e, train_f[1], train_l), silhouette_scores
