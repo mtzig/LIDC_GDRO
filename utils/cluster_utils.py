@@ -131,7 +131,7 @@ def check_cluster(embeds, max_clusters=15):
     return silhouette_coefficients
 
 
-def get_cluster_label(t_e, cvt_e, t_f, easy_malig, easy, hard):
+def get_cluster_label(t_e, cvt_e, t_f, easy, hard):
 
     clusterer = GaussianMixture(n_components=2, random_state=61).fit(t_e)
 
@@ -146,8 +146,8 @@ def get_cluster_label(t_e, cvt_e, t_f, easy_malig, easy, hard):
         return None
 
     #find well defined group
-    malig_counts_0 = sum(train_l[t_f == easy_malig] == 0)
-    malig_counts_1 = sum(train_l[t_f == easy_malig] == 1)
+    malig_counts_0 = sum(train_l[t_f == easy] == 0)
+    malig_counts_1 = sum(train_l[t_f == easy] == 1)
     defined_group = 0 if malig_counts_0 > malig_counts_1 else 1
 
     #set malignant groups
@@ -165,7 +165,7 @@ def get_cluster_label(t_e, cvt_e, t_f, easy_malig, easy, hard):
     cv_test_l[cvt_e_i] = easy
     cv_test_l[cvt_h_i] = hard
     
-        
+
     return train_l, cv_test_l
 
 def do_clustering(tr_loader, cv_loader, tst_loader, images_df, device='cpu'):
@@ -189,7 +189,6 @@ def do_clustering(tr_loader, cv_loader, tst_loader, images_df, device='cpu'):
                           cv_test_e[cv_test_f[1]>1], 
                           train_f[1][train_f[1] > 1], 
                         #   cv_test_f[cv_test_f[1]>1], 
-                          3, 
                           3,
                           2)
 
@@ -200,7 +199,6 @@ def do_clustering(tr_loader, cv_loader, tst_loader, images_df, device='cpu'):
                           cv_test_e[cv_test_f[1]<=1], 
                           train_f[1][train_f[1] <= 1], 
                         #   cv_test_f[1][cv_test_f[1]<=1], 
-                          0, 
                           0,
                           1)
         
