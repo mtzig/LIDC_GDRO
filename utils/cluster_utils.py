@@ -137,6 +137,35 @@ def get_splits_with_cluster():
     df_clusters = pd.concat([df_features_train, df_features_cv_test])[['noduleID', 'cluster']]
     df_clusters.sort_values('noduleID', inplace=True)
 
+
+def get_cluster_label(t_e, cvt_e, t_f, cvt_f, easy_malig, easy, hard):
+
+    clusterer = GaussianMixture(n_components=2, random_state=61).fit(t_e)
+
+    train_l, cv_test_l = clusterer.predict(t_e), clusterer.predict(cvt_e)
+
+
+    size_0 = sum(t_f[t_f[1] > 1] == 0)
+    size_1 = sum(t_l[train_f[1] > 1] == 1)
+
+    if min(size_0, size_1) < 50:
+        print('bad generated clusters, restarting process...')
+        return None
+
+    #find well defined group
+    malig_counts_0 = sum(train_l[train_f[1] == easy_malig] == 0)
+    malig_counts_1 = sum(train_l[train_f[1] == easy_malig] == 1)
+    defined_group = 0 if malig_counts_0 > malig_counts_1 else 1
+
+    #set malignant groups
+    train_l[train_l == defined_group] = easy
+    train_l[train_l == (1-defined_group)] = hard
+
+    cv_test_l[cv_test_l == defined_group] = easy
+    cv_test_l[cv_test_l == (1-defined_group)] = hard
+    
+    return train_l, cv_test_l
+
 def do_clustering(tr_loader, cv_loader, tst_loader, images_df, device='cpu'):
 
         model=TransferModel18(pretrained=True, freeze=False, device=device)
@@ -153,41 +182,39 @@ def do_clustering(tr_loader, cv_loader, tst_loader, images_df, device='cpu'):
         reducer.fit(train_f[0])
 
         train_e, cv_test_e = reducer.transform(train_f[0]), reducer.transform(cv_test_f[0])
+        
+        malig_r = get_cluster_label(train_e[train_f[1] > 1], 
+                          cv_test_e[cv_test_f[1]>1], 
+                          train_f[train_f[1] > 1], 
+                          cv_test_f[cv_test_f[1]>1], 
+                          3, 
+                          3,
+                          2)
 
-        silhouette_scores = check_cluster(train_e, max_clusters=15)
-        if max(silhouette_scores) != silhouette_scores[0]:
-            print('bad silhouette score, restarting process...')
+        if malig_r is None:
             return None
         
-        #We only cluster on malignat embeds
-        train_malig_e = train_e[train_f[1] > 1]
-        clusterer = GaussianMixture(n_components=2, random_state=61).fit(train_malig_e)
-
-        train_l, cv_test_l = clusterer.predict(train_e), clusterer.predict(cv_test_e)
-
-        size_0 = sum(train_l[train_f[1] > 1] == 0)
-        size_1 = sum(train_l[train_f[1] > 1] == 1)
+        benig_r = get_cluster_label(train_e[train_f[1] <= 1], 
+                          cv_test_e[cv_test_f[1]<=1], 
+                          train_f[train_f[1] <= 1], 
+                          cv_test_f[cv_test_f[1]<=1], 
+                          0, 
+                          0,
+                          1)
         
-        if min(size_0, size_1) < 50:
-            print('bad generated clusters, restarting process...')
+
+        if benig_r is None:
             return None
-        
-        #find well defined group
-        malig_counts_0 = sum(train_l[train_f[1] == 3] == 0)
-        malig_counts_1 = sum(train_l[train_f[1] == 3] == 1)
-        defined_group = 0 if malig_counts_0 > malig_counts_1 else 1
 
-        #set malignant groups
-        train_l[train_l == defined_group] = 2
-        train_l[train_l == (1-defined_group)] = 1
+        train_l = np.zeros_like(train_f[0])
+        cv_test_l = np.zeros_like(cv_test_f[0])
 
-        cv_test_l[cv_test_l == defined_group] = 2
-        cv_test_l[cv_test_l == (1-defined_group)] = 1
+        train_l[train_f[1] > 1] = malig_r[0]
+        train_l[train_f[1] <= 1] = benig_r[0]
 
-        #set all benign to 0
-        train_l[train_f[1] < 2] = 0
-        cv_test_l[cv_test_f[1]<2] = 0
-        
+        cv_test_l[cv_test_f[1] > 1] = malig_r[1]
+        cv_test_l[cv_test_f[1] <= 1] = benig_r[1]
+
         labels = np.concatenate((train_l, cv_test_l), axis=0)
         noduleIDs = np.concatenate((train_f[2], cv_test_f[2]), axis=0)
         
