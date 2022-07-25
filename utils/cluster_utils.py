@@ -158,6 +158,8 @@ def get_cluster_label(t_e, cvt_e, t_f, easy_malig, easy, hard):
     defined_group = 0 if malig_counts_0 > malig_counts_1 else 1
 
     #set malignant groups
+
+    #FIXED ########################## need to first get indexing, then reset them
     train_l[train_l == defined_group] = easy
     train_l[train_l == (1-defined_group)] = hard
 
