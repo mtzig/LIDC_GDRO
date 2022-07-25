@@ -130,13 +130,6 @@ def check_cluster(embeds, max_clusters=15):
 
     return silhouette_coefficients
 
-def get_splits_with_cluster():
-    df_features_train['cluster'] = train_labels
-    df_features_cv_test['cluster'] = cv_test_labels
-
-    df_clusters = pd.concat([df_features_train, df_features_cv_test])[['noduleID', 'cluster']]
-    df_clusters.sort_values('noduleID', inplace=True)
-
 
 def get_cluster_label(t_e, cvt_e, t_f, easy_malig, easy, hard):
 
@@ -159,12 +152,18 @@ def get_cluster_label(t_e, cvt_e, t_f, easy_malig, easy, hard):
 
     #set malignant groups
 
-    #FIXED ########################## need to first get indexing, then reset them
-    train_l[train_l == defined_group] = easy
-    train_l[train_l == (1-defined_group)] = hard
+    #FIX ########################## need to first get indexing, then reset them
+    t_e_i = train_l == defined_group
+    t_h_i = train_l == (1-defined_group)
+    
+    train_l[t_e_i] = easy
+    train_l[t_h_i] = hard
 
-    cv_test_l[cv_test_l == defined_group] = easy
-    cv_test_l[cv_test_l == (1-defined_group)] = hard
+    cvt_e_i = cv_test_l == defined_group
+    cvt_h_i = cv_test_l == (1-defined_group)
+    
+    cv_test_l[cvt_e_i] = easy
+    cv_test_l[cvt_h_i] = hard
     
     return train_l, cv_test_l
 
