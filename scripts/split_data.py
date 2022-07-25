@@ -3,7 +3,10 @@ import numpy as np
 
 lidc = pd.read_csv('./data/LIDC_semantic_spiculation_malignancy.csv', index_col=0)
 lidc = lidc[lidc['malignancy']!=3]
-lidc['malignancy'] = np.where(lidc['malignancy'] > 3, lidc['malignancy'] - 2, lidc['malignancy'] - 1)
+
+malignancy = np.where(lidc['malignancy'] > 3, lidc['malignancy'] - 2, lidc['malignancy'] - 1).astype(int)
+lidc['malignancy']= malignancy
+
 lidc = lidc.sample(frac=1, random_state=59)
 
 noduleID = []
@@ -31,10 +34,9 @@ df_split = pd.DataFrame(zip(noduleID, split), columns=['noduleID', 'split'])
 df_split.sort_values('noduleID', inplace=True)
 df_split.reset_index(drop=True, inplace=True)
 
+df_split['malignancy'] = malignancy
 
-df_split['malignancy'] = lidc['malignancy']
-
-maligs_b = list(map( lambda x:int(x>1), df_split['malignancy']))
+maligs_b = list(map( lambda x:int(x>1), malignancy))
 df_split['malignancy_b'] = maligs_b
 
 spic_b = np.where(lidc['spiculation'] > 1, 1, 0)
