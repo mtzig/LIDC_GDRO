@@ -138,23 +138,23 @@ def get_splits_with_cluster():
     df_clusters.sort_values('noduleID', inplace=True)
 
 
-def get_cluster_label(t_e, cvt_e, t_f, cvt_f, easy_malig, easy, hard):
+def get_cluster_label(t_e, cvt_e, t_f, easy_malig, easy, hard):
 
     clusterer = GaussianMixture(n_components=2, random_state=61).fit(t_e)
 
     train_l, cv_test_l = clusterer.predict(t_e), clusterer.predict(cvt_e)
 
 
-    size_0 = sum(t_f[t_f[1] > 1] == 0)
-    size_1 = sum(t_l[train_f[1] > 1] == 1)
+    size_0 = sum(t_f[t_f > 1] == 0)
+    size_1 = sum(t_l[t_f > 1] == 1)
 
     if min(size_0, size_1) < 50:
         print('bad generated clusters, restarting process...')
         return None
 
     #find well defined group
-    malig_counts_0 = sum(train_l[train_f[1] == easy_malig] == 0)
-    malig_counts_1 = sum(train_l[train_f[1] == easy_malig] == 1)
+    malig_counts_0 = sum(train_l[t_f == easy_malig] == 0)
+    malig_counts_1 = sum(train_l[t_f == easy_malig] == 1)
     defined_group = 0 if malig_counts_0 > malig_counts_1 else 1
 
     #set malignant groups
@@ -185,8 +185,8 @@ def do_clustering(tr_loader, cv_loader, tst_loader, images_df, device='cpu'):
         
         malig_r = get_cluster_label(train_e[train_f[1] > 1], 
                           cv_test_e[cv_test_f[1]>1], 
-                          train_f[train_f[1] > 1], 
-                          cv_test_f[cv_test_f[1]>1], 
+                          train_f[1][train_f[1] > 1], 
+                        #   cv_test_f[cv_test_f[1]>1], 
                           3, 
                           3,
                           2)
@@ -196,8 +196,8 @@ def do_clustering(tr_loader, cv_loader, tst_loader, images_df, device='cpu'):
         
         benig_r = get_cluster_label(train_e[train_f[1] <= 1], 
                           cv_test_e[cv_test_f[1]<=1], 
-                          train_f[train_f[1] <= 1], 
-                          cv_test_f[cv_test_f[1]<=1], 
+                          train_f[1][train_f[1] <= 1], 
+                        #   cv_test_f[1][cv_test_f[1]<=1], 
                           0, 
                           0,
                           1)
