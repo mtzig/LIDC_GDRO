@@ -7,7 +7,6 @@ lidc['malignancy'] = np.where(lidc['malignancy'] > 3, lidc['malignancy'] - 2, li
 lidc = lidc.sample(frac=1, random_state=59)
 
 noduleID = []
-maligs = []
 split = []
 
 tr_split, cv_split, test_split = 0.7, 0.1, 0.2
@@ -25,16 +24,23 @@ for malig in range(4):
         noduleID.extend(lidc_temp['noduleID'].iloc[l:indices[i+1]])
         split.extend((i,)*(indices[i+1]-l))
 
-    maligs.extend((malig,)*length)
 
-lidc['spic_b'] = np.where(lidc['spiculation'] > 1, 1, 0)
-maligs_b = list(map( lambda x:int(x>1), maligs))
-spics = [m*2+s for m,s in zip(maligs_b, lidc['spic_b'])]
-df_split = pd.DataFrame(zip(noduleID, spics, maligs, maligs_b, split), columns=['noduleID', 'spic_groups', 'malignancy', 'malignancy_b', 'split'])
+df_split = pd.DataFrame(zip(noduleID, split), columns=['noduleID', 'split'])
 
 # df_split = pd.DataFrame(zip(noduleID, maligs, maligs, split), columns=['noduleID', 'subgroup', 'malignancy', 'split'])
 df_split.sort_values('noduleID', inplace=True)
 df_split.reset_index(drop=True, inplace=True)
+
+
+df_split['malignancy'] = lidc['malignancy']
+
+maligs_b = list(map( lambda x:int(x>1), df_split['malignancy']))
+df_split['malignancy_b'] = maligs_b
+
+spic_b = np.where(lidc['spiculation'] > 1, 1, 0)
+spics = [m*2+s for m,s in zip(maligs_b, spic_b)]
+df_split['spic_groups'] = spics
+
 df_split.to_csv('./data/train_test_splits/LIDC_data_split.csv')
     
 
