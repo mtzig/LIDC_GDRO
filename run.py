@@ -12,6 +12,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('subclass_column')
 parser.add_argument('--test_name', default='test')
 parser.add_argument('--cnn', action='store_true')
+parser.add_argument('--e2e', action='store_true')
 parser.add_argument('--verbose', action='store_true')
 
 args = parser.parse_args()
@@ -23,7 +24,15 @@ wd = 0.005
 eta = 0.01
 gamma = 1.0
 
-model_class = models.NeuralNetwork
+if args.e2e:
+    model_class = models.ResNet18
+    model_args = [512, 64, 36, 2]
+else:
+    model_class = models.NeuralNetwork
+    if args.cnn:
+        model_args = [512, 64, 36, 2]
+    else:
+        model_args = [64, 36, 2]
 optimizer_class = torch.optim.Adam
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -79,10 +88,6 @@ dynamic_soft_args = [None, torch.nn.CrossEntropyLoss(), eta, gamma, num_subclass
 upweight_class = UpweightLoss
 upweight_args = [None, torch.nn.CrossEntropyLoss(), num_subclasses]
 
-if args.cnn:
-    model_args = [512, 64, 36, 2]
-else:
-    model_args = [64, 36, 2]
 optimizer_args = {'lr': lr, 'weight_decay': wd}
 
 results = {"Accuracies": {}, "q": {}, "g": {}, "ROC": {}}
