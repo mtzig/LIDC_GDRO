@@ -71,7 +71,7 @@ def scale_image(image_dim, upscale_amount=None, crop_change=None):
     return scalar
 
 
-def get_malignancy(lidc_df, nodule_id, binary):
+def get_malignancy(lidc_df, nodule_id, binary, device='cpu'):
     malignancy = lidc_df[lidc_df['noduleID'] == nodule_id]['malignancy'].iloc[0]
     if binary:
         return torch.tensor(1, device=device) if malignancy > 1 else torch.tensor(0)
