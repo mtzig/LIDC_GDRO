@@ -206,8 +206,8 @@ def do_clustering(tr_loader, cv_loader, tst_loader, images_df, device='cpu'):
         if benig_r is None:
             return None
 
-        train_l = np.zeros_like(train_f[0])
-        cv_test_l = np.zeros_like(cv_test_f[0])
+        train_l = np.zeros_like(train_f[1])
+        cv_test_l = np.zeros_like(cv_test_f[1])
 
         train_l[train_f[1] > 1] = malig_r[0]
         train_l[train_f[1] <= 1] = benig_r[0]
@@ -220,4 +220,4 @@ def do_clustering(tr_loader, cv_loader, tst_loader, images_df, device='cpu'):
         
         label_df = pd.DataFrame({'noduleID':noduleIDs, 'clusters':labels})
 
-        return label_df, (train_e, train_f[1], train_l), silhouette_scores
+        return label_df, (train_e, train_f[1], train_l)
