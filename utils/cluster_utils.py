@@ -241,6 +241,8 @@ def compare_silhouette(tr_clusters, cvt_clusters, tr_loader, cv_loader, tst_load
         reducer.fit(train_f[0])
 
         train_e, cv_test_e = reducer.transform(train_f[0]), reducer.transform(cv_test_f[0])
+        show_scatter(cv_test_e[:,0], cv_test_e[:,1], cvt_l, 'labeled by malignancy', 0.5 )
+        show_scatter(cv_test_e[:,0], cv_test_e[:,1], cvt_clusters, 'labeled by cluster', 0.5 )
 
         silhouette_t_m = silhouette_score(train_e, tr_l)
         silhouette_cvt_m = silhouette_score(cv_test_e, cvt_l)
