@@ -220,3 +220,32 @@ def do_clustering(tr_loader, cv_loader, tst_loader, images_df, device='cpu'):
         label_df = pd.DataFrame({'noduleID':noduleIDs, 'clusters':labels})
 
         return label_df, (train_e, train_f[1], train_l)
+
+def compare_silhoutte(tr_clusters, cvt_clusters, tr_loader, cv_loader, tst_loader, images_df, device='cpu'):
+
+        model=TransferModel18(pretrained=True, freeze=False, device=device)
+        train_erm_cluster(model, device=device, loaders=(tr_loader, cv_loader, tst_loader))
+
+        noduleID, features = extract_features(model, images_df=images_df, device=device)
+
+        df_features_all = features_to_df(noduleID, features)
+
+        #features and corresponding malignancy, noduleID
+        train_f, cv_test_f = split_features(df_features_all)
+
+        tr_l = train_f[1]
+        cvt_l = cv_test_f[1]
+
+
+        reducer = UMAP(random_state=8)
+        reducer.fit(train_f[0])
+
+        train_e, cv_test_e = reducer.transform(train_f[0]), reducer.transform(cv_test_f[0])
+
+        silhouette_t_m = silhouette_score(train_e, tr_l)
+        silhouette_cvt_m = silhouette_score(cv_test_e, cvt_l)
+
+        silhouette_t_c = silhouette_score(train_e, tr_clusters)
+        silhouette_cvt_c = silhouette_score(cv_test_e, cvt_clusters)
+
+        return (silhouette_t_m, silhouette_t_c), (silhouette_cvt_m, silhouette_cvt_c)
