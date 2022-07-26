@@ -146,13 +146,12 @@ def get_cluster_label(t_e, cvt_e, t_f, easy, hard):
         return None
 
     #find well defined group
-    malig_counts_0 = sum(train_l[t_f == easy] == 0)
-    malig_counts_1 = sum(train_l[t_f == easy] == 1)
+    malig_counts_0 = sum(train_l[t_f == easy] == 0)/sum(train_l[t_f == hard] == 0)
+    malig_counts_1 = sum(train_l[t_f == easy] == 1)/sum(train_l[t_f == hard] == 1)
     defined_group = 0 if malig_counts_0 > malig_counts_1 else 1
 
     #set malignant groups
 
-    #FIX ########################## need to first get indexing, then reset them
     t_e_i = train_l == defined_group
     t_h_i = train_l == (1-defined_group)
     
