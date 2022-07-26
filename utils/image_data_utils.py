@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 from train_eval import train, evaluate
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from matplotlib import pyplot as plt
+# from matplotlib import pyplot as plt
 
 
 def get_normed(this_array, this_min=0, this_max=255, set_to_int=True):

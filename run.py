@@ -43,6 +43,8 @@ batch_size = 128
 split_path = 'train_test_splits/LIDC_data_split.csv'
 subclass_path = 'subclass_labels/LIDC_data_split_with_cluster.csv'
 subclass_column = args.subclass_column
+if subclass_column == 'cluster':
+    subclass_path = 'subclass_labels/mode_label (2).csv'
 feature_path = 'LIDC_20130817_AllFeatures2D_MaxSlicePerNodule_inLineRatings.csv'
 
 results_root_dir = 'test_results/standardized/'
@@ -70,7 +72,7 @@ else:
 num_subclasses = len(test_dataloader.dataset.subclasses.unique())
 subtypes = ["Overall"]
 if subclass_column == 'cluster':
-    subtypes.extend(["Benign", "Malignant 1", "Malignant 2"])
+    subtypes.extend(["Likely Benign", "Somewhat Benign", "Somewhat Malignant", "Likely Malignant"])
 elif subclass_column == 'spic_groups':
     subtypes.extend(["Unspiculated benign", "Spiculated benign", "Spiculated malignant", "Unspiculated malignant"])
 elif subclass_column == 'malignancy':
