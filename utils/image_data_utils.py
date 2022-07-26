@@ -144,7 +144,7 @@ def images_to_df(image_folder='./data/LIDC(MaxSlices)_Nodules',
 
 
 def get_features(feature_file='./data/erm_cluster_cnn_features_1.csv',
-                 split_file='./data/subclass_labels/LIDC_data_split_with_cluster.csv',
+                 split_file='./data/train_test_splits/LIDC_data_split.csv',
                  subclass_file='./data/subclass_labels/mode_label (2).csv',
                  images=False,
                  features=None,

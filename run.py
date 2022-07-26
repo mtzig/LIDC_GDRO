@@ -40,8 +40,8 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 trials = 10
 epochs = 100
 batch_size = 128
-split_path = 'train_test_splits/LIDC_data_split.csv'
-subclass_path = 'subclass_labels/LIDC_data_split_with_cluster.csv'
+split_path = "train_test_splits/LIDC_data_split.csv"
+subclass_path = 'train_test_splits/LIDC_data_split.csv'
 subclass_column = args.subclass_column
 if subclass_column == 'cluster':
     subclass_path = 'subclass_labels/mode_label (2).csv'
@@ -54,7 +54,7 @@ test_name = args.test_name
 verbose = args.verbose
 
 if args.cnn:
-    train, val, test = image_data_utils.get_features(device=device, subclass=subclass_column)
+    train, val, test = image_data_utils.get_features(device=device, subclass=subclass_column, subclass_file='./data/' + subclass_path)
     train_dataloader = data_utils.create_dataloader(train, batch_size, is_dataframe=False)
     val_dataloader = data_utils.create_dataloader(val, len(val), is_dataframe=False)
     test_dataloader = data_utils.create_dataloader(test, len(test), is_dataframe=False)
