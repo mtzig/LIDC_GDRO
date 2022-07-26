@@ -221,7 +221,7 @@ def do_clustering(tr_loader, cv_loader, tst_loader, images_df, device='cpu'):
 
         return label_df, (train_e, train_f[1], train_l)
 
-def compare_silhoutte(tr_clusters, cvt_clusters, tr_loader, cv_loader, tst_loader, images_df, device='cpu'):
+def compare_silhouette(tr_clusters, cvt_clusters, tr_loader, cv_loader, tst_loader, images_df, device='cpu'):
 
         model=TransferModel18(pretrained=True, freeze=False, device=device)
         train_erm_cluster(model, device=device, loaders=(tr_loader, cv_loader, tst_loader))
