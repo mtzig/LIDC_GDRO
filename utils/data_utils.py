@@ -4,6 +4,7 @@ import torch
 from sklearn.preprocessing import StandardScaler
 from datasets import SubclassedDataset
 from dataloaders import InfiniteDataLoader
+import os
 
 id_name = 'noduleID'
 radiologist_id_name = 'RadiologistID'
@@ -49,17 +50,18 @@ def preprocess_data(df, subclass_df, subclass_column='subclass'):
     # select features and labels
     df = df.loc[:, [id_name, *numeric_feature_names, label_name]]
 
+    # remove malignancy = 3 or out of range 1-5
+    df = df[df[label_name].isin([1, 2, 4, 5])]
+
+    # remove nodules not in the images for fairness
+    df = df[df[id_name].isin(list(map(lambda x: int(x.replace('.txt', '')), os.listdir('data/LIDC(MaxSlices)_Nodules'))))]
+
     # add subclass data
     df['subclass'] = np.empty(len(df))
     subclass_df.index = subclass_df[id_name].values
 
-    df = df[df[id_name].isin(subclass_df[id_name])]
-
     for i in df.index:
         df.at[i, 'subclass'] = subclass_df.at[df.at[i, id_name], subclass_column]
-
-    # remove malignancy = 3 or out of range 1-5
-    df = df[df[label_name].isin([1, 2, 4, 5])]
 
     # binarize the remaining malignancy [1,2] -> 0, [4,5] -> 1
     df[label_name] = [int(m - 3 > 0) for m in df[label_name]]

@@ -24,9 +24,11 @@ wd = 0.005
 eta = 0.01
 gamma = 1.0
 
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
 if args.e2e:
-    model_class = models.ResNet18
-    model_args = [512, 64, 36, 2]
+    model_class = models.TransferModel18
+    model_args = [True, False, True, device]
 else:
     model_class = models.NeuralNetwork
     if args.cnn:
@@ -35,16 +37,12 @@ else:
         model_args = [64, 36, 2]
 optimizer_class = torch.optim.Adam
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
-
-trials = 10
-epochs = 100
+trials = 1
+epochs = 2
 batch_size = 128
 split_path = "train_test_splits/LIDC_data_split.csv"
-subclass_path = 'train_test_splits/LIDC_data_split.csv'
+subclass_path = 'subclass_labels/subclasses.csv'
 subclass_column = args.subclass_column
-if subclass_column == 'cluster':
-    subclass_path = 'subclass_labels/mode_label (2).csv'
 feature_path = 'LIDC_20130817_AllFeatures2D_MaxSlicePerNodule_inLineRatings.csv'
 
 results_root_dir = 'test_results/standardized/'
@@ -54,7 +52,12 @@ test_name = args.test_name
 verbose = args.verbose
 
 if args.cnn:
-    train, val, test = image_data_utils.get_features(device=device, subclass=subclass_column, subclass_file='./data/' + subclass_path)
+    train, val, test = image_data_utils.get_features(device=device, subclass=subclass_column)
+    train_dataloader = data_utils.create_dataloader(train, batch_size, is_dataframe=False)
+    val_dataloader = data_utils.create_dataloader(val, len(val), is_dataframe=False)
+    test_dataloader = data_utils.create_dataloader(test, len(test), is_dataframe=False)
+elif args.e2e:
+    train, val, test = image_data_utils.get_features(device=device, images=True, subclass=subclass_column)
     train_dataloader = data_utils.create_dataloader(train, batch_size, is_dataframe=False)
     val_dataloader = data_utils.create_dataloader(val, len(val), is_dataframe=False)
     test_dataloader = data_utils.create_dataloader(test, len(test), is_dataframe=False)
@@ -72,11 +75,11 @@ else:
 num_subclasses = len(test_dataloader.dataset.subclasses.unique())
 subtypes = ["Overall"]
 if subclass_column == 'cluster':
-    subtypes.extend(["Likely Benign", "Somewhat Benign", "Somewhat Malignant", "Likely Malignant"])
+    subtypes.extend(["Predominantly Benign", "Somewhat Benign", "Somewhat Malignant", "Predominantly Malignant"])
 elif subclass_column == 'spic_groups':
     subtypes.extend(["Unspiculated benign", "Spiculated benign", "Spiculated malignant", "Unspiculated malignant"])
 elif subclass_column == 'malignancy':
-    subtypes.extend(["Malignancy 1", "Malignancy 2", "Malignancy 4", "Malignancy 5"])
+    subtypes.extend(["Highly Unlikely", "Moderately Unlikely", "Moderately Suspicious", "Highly Suspicious"])
 else:
     subtypes.extend(list(range(num_subclasses)))
 
