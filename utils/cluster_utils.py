@@ -167,7 +167,7 @@ def get_cluster_label(t_e, cvt_e, t_f, easy, hard):
 
     return train_l, cv_test_l
 
-def do_clustering(tr_loader, cv_loader, tst_loader, images_df, device='cpu'):
+def do_clustering(tr_loader, cv_loader, tst_loader, images_df, get_cv_embeds=False, device='cpu'):
 
         model=TransferModel18(pretrained=True, freeze=False, device=device)
         train_erm_cluster(model, device=device, loaders=(tr_loader, cv_loader, tst_loader))
@@ -219,7 +219,12 @@ def do_clustering(tr_loader, cv_loader, tst_loader, images_df, device='cpu'):
         
         label_df = pd.DataFrame({'noduleID':noduleIDs, 'clusters':labels})
 
+        if get_cv_embeds:
+            return label_df, (train_e, train_f[1], train_l), (cv_test_e, cv_test_f[1], cv_test_l)
+        
         return label_df, (train_e, train_f[1], train_l)
+
+
 
 def compare_silhouette(tr_clusters, cvt_clusters, tr_loader, cv_loader, tst_loader, images_df, device='cpu'):
 
