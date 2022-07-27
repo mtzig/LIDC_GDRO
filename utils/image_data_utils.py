@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 from train_eval import train, evaluate
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-# from matplotlib import pyplot as plt
+from matplotlib import pyplot as plt
 
 
 def get_normed(this_array, this_min=0, this_max=255, set_to_int=True):
@@ -116,16 +116,14 @@ def augment_image(image):
 def images_to_df(image_folder='./data/LIDC(MaxSlices)_Nodules',
                  image_labels='./data/LIDC_semantic_spiculation_malignancy.csv',
                  image_dim=71):
-    
     LIDC_labels = pd.read_csv(image_labels, index_col=0)
     scalar = scale_image(image_dim)
 
-    cols = {'noduleID': [], 'malignancy': [], 'image':[]}
-
+    cols = {'noduleID': [], 'malignancy': [], 'image': []}
 
     for file in os.listdir(image_folder):
         nodule_id = int(file.split('.')[0])
-        malignancy = get_malignancy(LIDC_labels,nodule_id,False)
+        malignancy = get_malignancy(LIDC_labels, nodule_id, False)
 
         image_raw = np.loadtxt(os.path.join(image_folder, file))
         image_raw = torch.from_numpy(image_raw)
@@ -145,67 +143,60 @@ def images_to_df(image_folder='./data/LIDC(MaxSlices)_Nodules',
 
 def get_features(feature_file='./data/erm_cluster_cnn_features_1.csv',
                  split_file='./data/train_test_splits/LIDC_data_split.csv',
-                 subclass_file='./data/subclass_labels/mode_label (2).csv',
+                 subclass_file='./data/subclass_labels/subclasses.csv',
                  images=False,
                  features=None,
                  device='cpu',
                  subclass='cluster'):
-
-    df_splits = pd.read_csv(split_file, index_col=0)
-    df_splits.reset_index(drop=True, inplace=True)
-
-    df_subclass = pd.read_csv(subclass_file, index_col=0)
-    df_subclass.reset_index(drop=True, inplace=True)
+    df_splits = pd.read_csv(split_file)
+    df_subclass = pd.read_csv(subclass_file)
 
     if images:
         if features is None:
             df_features = images_to_df()
         else:
-            df_features=features
+            df_features = features
     else:
         df_features = pd.read_csv(feature_file, index_col=0)
 
     df_features = df_features[df_features['noduleID'].isin(df_splits['noduleID'])]
 
-    #Sort most likely extraneous, but good for robustness
+    # Sort most likely extraneous, but good for robustness
     df_features.sort_values('noduleID', inplace=True)
     df_features.reset_index(drop=True, inplace=True)
 
     df_features['clusters'] = df_subclass[subclass]
     df_features['malignancy_b'] = df_splits['malignancy_b']
 
-
-
     dfs = []
     for i in range(3):
         dfs.append(df_features.loc[(df_splits['split'] == i).values])
 
     datas = []
-    for i,d in enumerate(dfs):
+    for i, d in enumerate(dfs):
 
         if images:
 
-            #If the training dataset, we need to do data augmentation
+            # If the training dataset, we need to do data augmentation
             if i == 0:
 
                 imgs = []
                 for img in d['image']:
                     imgs.extend(augment_image(img))
                 X = torch.stack(imgs).to(device=device, dtype=torch.float32)
-                
 
-                #hacky way to repeat the labels for the additional augmented images
+                # hacky way to repeat the labels for the additional augmented images
                 augments = X.shape[0] // len(d)
                 d_temp = pd.DataFrame()
                 d_temp['malignancy_b'] = np.repeat(d['malignancy_b'].values, augments)
                 d_temp['clusters'] = np.repeat(d['clusters'].values, augments)
-                d=d_temp
+                d = d_temp
 
             else:
                 X = torch.stack(list(d['image'])).to(device=device, dtype=torch.float32)
         else:
             X = torch.tensor(d.drop(['noduleID', 'clusters', 'malignancy_b'], axis=1).values,
-                         device=device, dtype=torch.float32)
+                             device=device, dtype=torch.float32)
 
         y = torch.tensor(d['malignancy_b'].values, device=device, dtype=torch.long)
         c = torch.tensor(d['clusters'].values, device=device)
@@ -222,7 +213,6 @@ def get_train_val_split(dataset, split_percent=0.8):
 
 def train_epochs(epochs, train_loader, val_loader, model, loss_fn, scheduler=True, num_subgroups=None,
                  verbose=True):
-
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0005, weight_decay=0.005)
     if scheduler:
         scheduler = ReduceLROnPlateau(optimizer, mode='max', factor=0.2, patience=2, verbose=True)
