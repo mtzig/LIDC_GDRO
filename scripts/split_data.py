@@ -6,6 +6,7 @@ lidc = lidc[lidc['malignancy']!=3]
 
 malignancy = np.where(lidc['malignancy'] > 3, lidc['malignancy'] - 2, lidc['malignancy'] - 1).astype(int)
 lidc['malignancy']= malignancy
+spic_b = np.where(lidc['spiculation'] > 1, 1, 0)
 
 lidc = lidc.sample(frac=1, random_state=59)
 
@@ -39,7 +40,6 @@ df_split['malignancy'] = malignancy
 maligs_b = list(map( lambda x:int(x>1), malignancy))
 df_split['malignancy_b'] = maligs_b
 
-spic_b = np.where(lidc['spiculation'] > 1, 1, 0)
 spics = [m*2+s for m,s in zip(maligs_b, spic_b)]
 df_split['spic_groups'] = spics
 
