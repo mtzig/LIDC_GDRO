@@ -14,6 +14,7 @@ parser.add_argument('--test_name', default='test')
 parser.add_argument('--cnn', action='store_true')
 parser.add_argument('--e2e', action='store_true')
 parser.add_argument('--verbose', action='store_true')
+parser.add_argument('--colab', action='store_true')
 
 args = parser.parse_args()
 
@@ -37,8 +38,8 @@ else:
         model_args = [64, 36, 2]
 optimizer_class = torch.optim.Adam
 
-trials = 1
-epochs = 2
+trials = 100
+epochs = 100
 batch_size = 128
 split_path = "train_test_splits/LIDC_data_split.csv"
 subclass_path = 'subclass_labels/subclasses.csv'
@@ -159,3 +160,10 @@ accuracies_df.to_csv(results_dir + f'accuracies.csv')
 q_df.to_csv(results_dir + f'q.csv')
 g_df.to_csv(results_dir + f'g.csv')
 roc_df.to_csv(results_dir + f'roc.csv', index=False)
+
+if args.colab:
+    from google.colab import files
+    files.download(results_dir + f'accuracies.csv')
+    files.download(results_dir + f'q.csv')
+    files.download(results_dir + f'g.csv')
+    files.download(results_dir + f'roc.csv')
