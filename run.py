@@ -46,7 +46,7 @@ subclass_path = 'subclass_labels/subclasses.csv'
 subclass_column = args.subclass_column
 feature_path = 'LIDC_20130817_AllFeatures2D_MaxSlicePerNodule_inLineRatings.csv'
 
-results_root_dir = 'test_results/standardized/'
+results_root_dir = 'test_results/'
 
 test_name = args.test_name
 
