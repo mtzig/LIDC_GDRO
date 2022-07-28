@@ -1,8 +1,10 @@
 import torch
 
+
 class GDROLoss:
     """
-    GDROLoss function to be used with SubclassedNoduleDataset
+    Implements the gDRO loss function
+    See https://arxiv.org/abs/1911.08731 for details on the algorithm
     """
 
     def __init__(self, model, loss_fn, eta, num_subclasses, normalize_loss=False):
@@ -12,9 +14,6 @@ class GDROLoss:
         self.eta = eta
         self.num_subclasses = num_subclasses
         self.normalize_loss = normalize_loss
-
-        # for debug purposes
-        self.losses = torch.tensor([])
 
     def __call__(self, minibatch):
 
@@ -56,13 +55,15 @@ class GDROLoss:
         else:
             loss = torch.dot(losses, self.q)
 
-        # store losses for retrieval by debug program
-        self.losses = losses
-
         return loss
 
 
 class ERMLoss:
+    """
+    Implements a standard Empirical Risk Minimization loss function
+    Takes the classifier model and an underlying loss function as input, ex. a neural network for the model and cross-entropy loss as the underlying function
+    """
+
     def __init__(self, model, loss_fn):
         self.model = model
         self.loss_fn = loss_fn
