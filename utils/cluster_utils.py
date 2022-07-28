@@ -25,6 +25,7 @@ def train_erm_cluster(model, device='cpu', loaders=None):
     Trains a default ERM model on LIDC
 
     model: This should be a TransferModel18
+    loaders: Loaders to use, if None, will initialize the loaders in this function
     
     '''
 
@@ -56,6 +57,14 @@ def train_erm_cluster(model, device='cpu', loaders=None):
 def extract_features(model, images_df=None, device='cpu'):
     '''
     extract features of model
+
+    inputs:
+    model: expects an ResNet18 model
+    images_df: dataframe of noduleID and image, initializes in this function if None
+
+    outputs:
+    noduleID and corresponding activation features
+
     '''
 
     if images_df is None:
@@ -221,7 +230,7 @@ def do_clustering(tr_loader, cv_loader, tst_loader, images_df, get_cv_embeds=Fal
 
         if get_cv_embeds:
             return label_df, (train_e, train_f[1], train_l), (cv_test_e, cv_test_f[1], cv_test_l)
-        
+
         return label_df, (train_e, train_f[1], train_l)
 
 
