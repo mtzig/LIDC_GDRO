@@ -116,9 +116,23 @@ def augment_image(image):
 def images_to_df(image_folder='./data/LIDC(MaxSlices)_Nodules',
                  image_labels='./data/LIDC_semantic_spiculation_malignancy.csv',
                  image_dim=71):
+    
+    '''
+    Creates a dataframe of noduleID and corresponding image tensor
+
+    inputs:
+    image_folder: the folder of images
+    image_labels: path of csv file containing labels
+    image_dim: the dimension of image
+
+    output:
+    img_df: pandas dataframe of noduleID and corresponding image as a numpy tensor
+
+    '''
+    
+    
     LIDC_labels = pd.read_csv(image_labels, index_col=0)
     scalar = scale_image(image_dim)
-
     cols = {'noduleID': [], 'malignancy': [], 'image': []}
 
     for file in os.listdir(image_folder):
@@ -148,6 +162,27 @@ def get_features(feature_file='./data/erm_cluster_cnn_features_1.csv',
                  features=None,
                  device='cpu',
                  subclass='cluster'):
+
+    '''
+    gets features in their train, cv and test splits
+
+    inputs:
+    feature_file: path of csv file with features
+    split_file: path of csv with data split of nodules
+    subclass_file: path of csv with the subclasses of nodules
+    images: if True get images instead of using feature_file
+    features: only checked if images == True, if not None, should be the df of
+              noduleID and corresponding image tensors
+    device: cpu or cuda, device to place the tensors on
+    sublcass: the name of column in subclass_file to extract subclass labels from
+
+    outputs:
+    datas: a list of size three, of train data, cross val data, test data
+           datas[i]: a list of size three, of features, labels, subclass labels
+
+    '''
+
+    
     df_splits = pd.read_csv(split_file)
     df_subclass = pd.read_csv(subclass_file)
 
