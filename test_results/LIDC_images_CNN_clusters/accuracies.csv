@@ -1,4 +1,4 @@
-trial,epoch,subtype,ERM,GDRO
+trial,epoch,subtype,ERMLoss,GDROLoss
 0,0,Overall,0.8039867109634552,0.7906976744186046
 0,0,Likely Benign,1.0,1.0
 0,0,Somewhat Benign,0.9457364341085271,0.9302325581395349

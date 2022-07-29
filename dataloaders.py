@@ -20,6 +20,9 @@ class _InfiniteSampler(torch.utils.data.Sampler):
 
 
 class InfiniteDataLoader:
+    """
+    Uses an infinite sampler to create a dataloader that never becomes empty
+    """
     def __init__(self, dataset, batch_size, weights=None, num_workers=0):
         super().__init__()
 

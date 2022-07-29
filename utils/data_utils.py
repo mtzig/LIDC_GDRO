@@ -6,8 +6,10 @@ from datasets import SubclassedDataset
 from dataloaders import InfiniteDataLoader
 import os
 
+# column name of the id
 id_name = 'noduleID'
-radiologist_id_name = 'RadiologistID'
+
+# column names of the features of interest
 numeric_feature_names = ['Area', 'ConvexArea', 'Perimeter', 'ConvexPerimeter', 'EquivDiameter',
                          'MajorAxisLength', 'MinorAxisLength',
                          'Elongation', 'Compactness', 'Eccentricity', 'Solidity', 'Extent',
@@ -24,29 +26,42 @@ numeric_feature_names = ['Area', 'ConvexArea', 'Perimeter', 'ConvexPerimeter', '
                          'gaborSD_3_2', 'Contrast', 'Correlation', 'Energy', 'Homogeneity',
                          'Entropy', 'x_3rdordermoment', 'Inversevariance', 'Sumaverage',
                          'Variance', 'Clustertendency']
-# numeric_feature_names += [f'CNN_{n}' for n in range(1, 37)]
-semantic_feature_names = ['subtlety', 'internalStructure', 'calcification', 'sphericity', 'margin', 'lobulation', 'spiculation', 'texture', 'malignancy']
+
+# column name of the malignancy label
 label_name = 'malignancy'
+
+# set device
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
-def load_lidc(data_root, feature_path, subclass_path):
+def load_lidc(data_root='./data/', feature_path='LIDC_20130817_AllFeatures2D_MaxSlicePerNodule_inLineRatings.csv', subclass_path='subclass_labels/subclasses.csv'):
+    """
+    Loads LIDC data into feature and subclass dataframes
+    :param data_root: Directory containing the .csv files
+    :param feature_path: Path to the .csv file containing the id, features, and malignancy
+    :param subclass_path: Path to the .csv file containing the subclass labels
+    :return:
+    """
     df = pd.read_csv(data_root + feature_path)
-    # max_slice_df = pd.read_csv(max_slice_data_path)
-    # max_slice_df.index = max_slice_df[id_name]
-
     subclass_df = pd.read_csv(data_root + subclass_path)
-
-    # attach malignancy features to the numeric feature dataframe
-    # for instance in df.index:
-    #     nodule_id = df.at[instance, id_name]
-    #     radiologist = df.at[instance, radiologist_id_name]
-    #     df.at[instance, label_name] = max_slice_df.at[nodule_id, label_name + f'_{radiologist}']
 
     return df, subclass_df
 
 
 def preprocess_data(df, subclass_df, subclass_column='subclass'):
+    """
+    Preprocesses the data from load_lidc()
+    This includes:
+    - Removing all data that is not the id, features, malignancy, and subclass
+    - Combining subclass data with the feature data
+    - Removing nodules with indeterminate malignancy
+    - Reducing other malignancy labels to a binary benign/malignant designation
+    - Normalizing the feature data by z-score
+    :param df: Dataframe including the id, features, and malignancy
+    :param subclass_df: Dataframe containing the subclass data
+    :param subclass_column: The column of subclass_df containing the subclass data
+    :return: A single dataframe containing the id, normalized features, binary malignancy, and subclass labels
+    """
     # select features and labels
     df = df.loc[:, [id_name, *numeric_feature_names, label_name]]
 
@@ -73,6 +88,11 @@ def preprocess_data(df, subclass_df, subclass_column='subclass'):
 
 
 def split_to_tensors(df):
+    """
+    Splits a dataframe into tensors of features, labels, and subclass labels
+    :param df: The dataframe to split
+    :return: 3 tensors of the data
+    """
     # tensorify
     data = torch.FloatTensor(df.loc[:, numeric_feature_names].values).to(device)
     labels = torch.LongTensor(df.loc[:, label_name].values).to(device)
@@ -82,6 +102,13 @@ def split_to_tensors(df):
 
 
 def create_dataloader(data, batch_size, is_dataframe=True):
+    """
+    Creates an InfiniteDataLoader from the given data and using the given batch size
+    :param data: Data to put in the dataloader, either a dataframe or 3 tensors
+    :param batch_size: Batch size to use for the dataloader
+    :param is_dataframe: Whether data is a dataframe, if False, the data is assumed to already be in the form (feature tensor, label tensor, subclass tensor)
+    :return: A dataloader for the data
+    """
     if is_dataframe:
         X, y, c = split_to_tensors(data)
     else:
@@ -91,19 +118,3 @@ def create_dataloader(data, batch_size, is_dataframe=True):
     dataloader = InfiniteDataLoader(SubclassedDataset(X, y, c), batch_size=batch_size)
 
     return dataloader
-
-
-def train_val_test_dataloaders(df, split_path, batch_size):
-    # get train/test flags
-    train_split = pd.read_csv(split_path)
-
-    # create train/test dataframes
-    train_df = df[df["noduleID"].isin(train_split[train_split["split"] == 0]["noduleID"].values)]
-    val_df = df[df["noduleID"].isin(train_split[train_split["split"] == 1]["noduleID"].values)]
-    test_df = df[df["noduleID"].isin(train_split[train_split["split"] == 2]["noduleID"].values)]
-
-    train_dataloader = create_dataloader(train_df, batch_size)
-    val_dataloader = create_dataloader(val_df, len(val_df))
-    test_dataloader = create_dataloader(test_df, len(test_df))
-
-    return train_dataloader, val_dataloader, test_dataloader

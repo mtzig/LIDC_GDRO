@@ -4,7 +4,10 @@ from PIL import Image
 
 
 class SubclassedDataset(Dataset):
-
+    """
+    Dataset for subclassed data
+    Similar to a normal dataset, but getitem returns the subclass label as well as the feature tensor and superclass label
+    """
     def __init__(self, features, labels, subclasses):
         '''
         INPUTS:
@@ -29,15 +32,18 @@ class SubclassedDataset(Dataset):
 
 
 class OnDemandImageDataset(Dataset):
+    """
+    A dataset for loading images from the disk as they are needed rather than storing them all in GPU RAM
+    This is very, very slow but if RAM is limited or the images are too large this may be necessary
+    This class was originally created to load data from waterbirds, so it may be necessary to modify the code below to refer to the correct columns in the metadata dataframe
+    """
     def __init__(self, metadata, root_dir, transform, device):
-        '''
-        INPUTS:
-        metadata: metadata dataframe storing the image paths, labels, and subclasses
-        root_dir: the directory where the image files are stored
-        transform: the transform to apply to the image when it is loaded
-        device to move tensors to as they are loaded
-
-        '''
+        """
+        :param metadata: dataframe storing the image paths, labels, and subclasses
+        :param root_dir: the directory where the image files are stored
+        :param transform: the transform to apply to the image when it is loaded
+        :param device to move tensors to as they are loaded
+        """
 
         self.metadata = metadata
         self.root_dir = root_dir

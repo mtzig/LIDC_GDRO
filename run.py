@@ -29,7 +29,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 if args.e2e:
     model_class = models.TransferModel18
-    model_args = [True, False, True, device]
+    model_args = [True, False, device]
 else:
     model_class = models.NeuralNetwork
     if args.cnn:

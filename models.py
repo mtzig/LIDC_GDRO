@@ -2,9 +2,11 @@ from torch import nn
 import torchvision
 
 
-# generic fully-connected neural network class
 class NeuralNetwork(nn.Module):
-
+    """
+    Generic fully-connected network class
+    The first argument of the constructor should be the number of input features, and the last should be the number of outputs
+    """
     # layers = int layer sizes, starting with the input layer
     def __init__(self, *layers):
         super(NeuralNetwork, self).__init__()
@@ -22,82 +24,26 @@ class NeuralNetwork(nn.Module):
         return logits
 
 
-class VGGNet(nn.Module):
-
-    def __init__(self, device='cpu'):
-        super(VGGNet, self).__init__()
-
-        self.model = torchvision.models.vgg19(pretrained=True).to(device)
-
-        # freeze all but last layer
-        last_layer_idx = 34
-        for layer in list(self.model.features.children())[:last_layer_idx]:
-            for param in layer.parameters():
-                param.requires_grad = False
-
-        self.model.classifier = nn.Sequential(
-            nn.Linear(in_features=25088, out_features=512, bias=True, device=device),
-            nn.ReLU(inplace=True),
-            nn.Dropout(p=0.5, inplace=False),
-            nn.Linear(in_features=512, out_features=36, bias=True, device=device),
-            nn.ReLU(inplace=True),
-            nn.Dropout(p=0.5, inplace=False),
-            nn.Linear(in_features=36, out_features=1, bias=True, device=device)
-        )
-
-    def forward(self, x):
-        return self.model(x).squeeze()
-
-
-class ResNet18(nn.Module):
-
-    def __init__(self, device='cpu', pretrained=True, freeze=True):
-        super(ResNet18, self).__init__()
-
-        self.model = torchvision.models.resnet18(pretrained=pretrained).to(device)
-
-        if pretrained and freeze:
-            for param in self.model.parameters():
-                param.requires_grad = False
-
-            for param in self.model.layer4.parameters():
-                param.requires_grad = True
-
-        self.model.fc = nn.Sequential(
-            nn.Linear(in_features=512, out_features=36, bias=True, device=device),
-            nn.ReLU(inplace=True),
-            nn.Dropout(p=0.5, inplace=False),
-            nn.Linear(in_features=36, out_features=2, bias=True, device=device)
-        )
-
-        for layer in self.model.fc:
-            if hasattr(layer, 'weight'):
-                nn.init.xavier_uniform_(layer.weight)
-
-    def forward(self, x):
-        return self.model(x).squeeze()
-
-
 class TransferModel18(nn.Module):
-
-    def __init__(self, pretrained=True, freeze=True, binary=True, device='cpu'):
+    """
+    ResNet18 transfer learning model
+    By default we set the fully-connected classifier layer to a single 512x2 layer
+    """
+    def __init__(self, pretrained=True, freeze=True, device='cpu'):
         super(TransferModel18, self).__init__()
 
-        self.model = torchvision.models.resnet18(pretrained=pretrained).to(device)
+        if pretrained:
+            self.model = torchvision.models.resnet18(weights=torchvision.models.ResNet18_Weights.default).to(device)
+        else:
+            self.model = torchvision.models.resnet18().to(device)
 
         if freeze:
             for param in self.model.parameters():
                 param.requires_grad = False
 
-            # for param in self.model.layer4.parameters():
-            #     param.requires_grad = True
-
-        out_feats = 2 if binary else 4
+        # Fully-connected layer
         self.model.fc = nn.Sequential(
-            nn.Linear(in_features=512, out_features=out_feats, bias=True, device=device),
-            # nn.ReLU(inplace=True),
-            # # nn.Dropout(p=0.5, inplace=False),
-            # nn.Linear(in_features=36, out_features=out_feats, bias=True, device=device)
+            nn.Linear(in_features=512, out_features=2, bias=True, device=device),
         )
 
         for layer in self.model.fc:
@@ -109,15 +55,22 @@ class TransferModel18(nn.Module):
 
 
 class TransferModel50(nn.Module):
+    """
+    ResNet50 transfer learning model
+    """
     def __init__(self, pretrained=True, freeze=True, device='cpu'):
         super(TransferModel50, self).__init__()
 
-        self.model = torchvision.models.resnet50(pretrained=pretrained).to(device)
+        if pretrained:
+            self.model = torchvision.models.resnet50(weights=torchvision.models.ResNet50_Weights.default).to(device)
+        else:
+            self.model = torchvision.models.resnet50().to(device)
 
         if freeze:
             for param in self.model.parameters():
                 param.requires_grad = False
 
+        # Fully-connected layer
         self.model.fc = nn.Sequential(
             nn.Linear(in_features=2048, out_features=2, bias=True, device=device),
         )
