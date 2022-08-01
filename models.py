@@ -33,7 +33,7 @@ class TransferModel18(nn.Module):
         super(TransferModel18, self).__init__()
 
         if pretrained:
-            self.model = torchvision.models.resnet18('DEFAULT').to(device)
+            self.model = torchvision.models.resnet18(weights='DEFAULT').to(device)
         else:
             self.model = torchvision.models.resnet18().to(device)
 
