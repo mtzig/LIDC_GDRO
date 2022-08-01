@@ -114,7 +114,7 @@ def augment_image(image):
 
 
 def images_to_df(image_folder='./data/LIDC(MaxSlices)_Nodules',
-                 image_labels='./data/LIDC_semantic_spiculation_malignancy.csv',
+                 image_labels='./data/LIDC_20130817_AllFeatures2D_MaxSlicePerNodule_inLineRatings.csv',
                  image_dim=71):
     
     '''
