@@ -8,6 +8,26 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from matplotlib import pyplot as plt
 
 
+def get_sampler_weights(subclass_labels):
+    '''
+    Returns a list of weights that allows uniform sampling of dataset
+    by subclasses
+    '''
+
+    subclasses = torch.unique(subclass_labels)
+    subclass_freqs = []
+
+    for subclass in subclasses:
+        subclass_counts = sum(subclass_labels == subclass)
+        subclass_freqs.append(1/subclass_counts)
+
+    subclass_weights = torch.zeros_like(subclass_labels).float()
+    
+    for idx, label in enumerate(subclass_labels):
+        subclass_weights[idx] = subclass_freqs[int(label)]
+        
+    return subclass_weights
+
 def get_normed(this_array, this_min=0, this_max=255, set_to_int=True):
     """
         INPUTS:
