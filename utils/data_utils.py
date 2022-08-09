@@ -101,7 +101,7 @@ def split_to_tensors(df):
     return data, labels, subclass_labels
 
 
-def create_dataloader(data, batch_size, is_dataframe=True):
+def create_dataset(data, is_dataframe=True):
     """
     Creates an InfiniteDataLoader from the given data and using the given batch size
     :param data: Data to put in the dataloader, either a dataframe or 3 tensors
@@ -114,7 +114,19 @@ def create_dataloader(data, batch_size, is_dataframe=True):
     else:
         X, y, c = data
 
-    # wrap with dataset and dataloader
-    dataloader = InfiniteDataLoader(SubclassedDataset(X, y, c), batch_size=batch_size)
+    return X,y, c
 
-    return dataloader
+def train_val_test_datasets(df, split_path, batch_size):
+    # get train/test flags
+    train_split = pd.read_csv(split_path)
+
+    # create train/test dataframes
+    train_df = df[df["noduleID"].isin(train_split[train_split["split"] == 0]["noduleID"].values)]
+    val_df = df[df["noduleID"].isin(train_split[train_split["split"] == 1]["noduleID"].values)]
+    test_df = df[df["noduleID"].isin(train_split[train_split["split"] == 2]["noduleID"].values)]
+
+    train = create_dataset(train_df)
+    val = create_dataset(val_df)
+    test = create_dataset(test_df)
+
+    return train, val, test

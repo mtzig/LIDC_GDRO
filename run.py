@@ -7,6 +7,7 @@ import pandas as pd
 from datetime import datetime
 import os
 import argparse
+from dataloaders import InfiniteDataLoader
 
 parser = argparse.ArgumentParser()
 parser.add_argument('subclass_column')
@@ -54,14 +55,10 @@ verbose = args.verbose
 
 if args.cnn:
     train, val, test = image_data_utils.get_features(device=device, subclass=subclass_column)
-    train_dataloader = data_utils.create_dataloader(train, batch_size, is_dataframe=False)
-    val_dataloader = data_utils.create_dataloader(val, len(val), is_dataframe=False)
-    test_dataloader = data_utils.create_dataloader(test, len(test), is_dataframe=False)
+
 elif args.e2e:
     train, val, test = image_data_utils.get_features(device=device, images=True, subclass=subclass_column)
-    train_dataloader = data_utils.create_dataloader(train, batch_size, is_dataframe=False)
-    val_dataloader = data_utils.create_dataloader(val, len(val), is_dataframe=False)
-    test_dataloader = data_utils.create_dataloader(test, len(test), is_dataframe=False)
+
 else:
     df = data_utils.preprocess_data(
         *data_utils.load_lidc(
@@ -71,7 +68,14 @@ else:
         ),
         subclass_column=subclass_column
     )
-    train_dataloader, val_dataloader, test_dataloader = data_utils.train_val_test_dataloaders(df, split_path="data/train_test_splits/LIDC_data_split.csv", batch_size=batch_size)
+
+    train, val, test = data_utils.train_val_test_datasets(df, split_path="data/train_test_splits/LIDC_data_split.csv")
+
+
+
+
+val_dataloader = InfiniteDataLoader(val, len(val))
+test_dataloader = InfiniteDataLoader(test, len(test))
 
 num_subclasses = len(test_dataloader.dataset.subclasses.unique())
 subtypes = ["Overall"]
@@ -101,6 +105,12 @@ results = {"Accuracies": {}, "q": {}, "g": {}, "ROC": {}}
 for loss_class, loss_args in zip([erm_class, gdro_class, dynamic_class, upweight_class], [erm_args, gdro_args, dynamic_args, upweight_args]):
 # for loss_class, loss_args in zip([dynamic_class], [dynamic_args]):
     fn_name = loss_class.__name__
+
+    if fn_name == erm_class:
+        train_dataloader = InfiniteDataLoader(train, batch_size)
+    else:
+        train_dataloader = InfiniteDataLoader(train, batch_size, weights=image_data_utils.get_sampler_weights(train.subclasses))
+
 
     if verbose:
         print(f"Running trials: {fn_name}")
