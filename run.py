@@ -1,5 +1,5 @@
 import torch
-from loss import ERMLoss, GDROLoss, DynamicLoss, UpweightLoss
+from loss import ERMLoss, GDROLoss
 import models
 from utils import data_utils, image_data_utils
 from train_eval import run_trials
@@ -92,17 +92,17 @@ erm_class = ERMLoss
 erm_args = [None, torch.nn.CrossEntropyLoss()]
 gdro_class = GDROLoss
 gdro_args = [None, torch.nn.CrossEntropyLoss(), eta, num_subclasses]
-dynamic_class = DynamicLoss
-dynamic_args = [None, torch.nn.CrossEntropyLoss(), eta, gamma, num_subclasses]
-dynamic_soft_args = [None, torch.nn.CrossEntropyLoss(), eta, gamma, num_subclasses, None, torch.nn.Softmax(dim=0)]
-upweight_class = UpweightLoss
-upweight_args = [None, torch.nn.CrossEntropyLoss(), num_subclasses]
+# dynamic_class = DynamicLoss
+# dynamic_args = [None, torch.nn.CrossEntropyLoss(), eta, gamma, num_subclasses]
+# dynamic_soft_args = [None, torch.nn.CrossEntropyLoss(), eta, gamma, num_subclasses, None, torch.nn.Softmax(dim=0)]
+# upweight_class = UpweightLoss
+# upweight_args = [None, torch.nn.CrossEntropyLoss(), num_subclasses]
 
 optimizer_args = {'lr': lr, 'weight_decay': wd}
 
 results = {"Accuracies": {}, "q": {}, "g": {}, "ROC": {}}
 
-for loss_class, loss_args in zip([erm_class, gdro_class, dynamic_class, upweight_class], [erm_args, gdro_args, dynamic_args, upweight_args]):
+for loss_class, loss_args in zip([erm_class, gdro_class], [erm_args, gdro_args]):
 # for loss_class, loss_args in zip([dynamic_class], [dynamic_args]):
     fn_name = loss_class.__name__
 
