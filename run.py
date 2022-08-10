@@ -8,6 +8,8 @@ from datetime import datetime
 import os
 import argparse
 from dataloaders import InfiniteDataLoader
+from datasets import SubclassedDataset
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('subclass_column')
@@ -74,8 +76,8 @@ else:
 
 
 
-val_dataloader = InfiniteDataLoader(val, len(val))
-test_dataloader = InfiniteDataLoader(test, len(test))
+val_dataloader = InfiniteDataLoader(SubclassedDataset(*val), len(val))
+test_dataloader = InfiniteDataLoader(SubclassedDataset(*test), len(test))
 
 num_subclasses = len(test_dataloader.dataset.subclasses.unique())
 subtypes = ["Overall"]
@@ -106,10 +108,12 @@ for loss_class, loss_args in zip([erm_class, gdro_class], [erm_args, gdro_args])
 # for loss_class, loss_args in zip([dynamic_class], [dynamic_args]):
     fn_name = loss_class.__name__
 
+    tr = SubclassedDataset(*train)
+
     if fn_name == erm_class:
-        train_dataloader = InfiniteDataLoader(train, batch_size)
+        train_dataloader = InfiniteDataLoader(tr, batch_size)
     else:
-        train_dataloader = InfiniteDataLoader(train, batch_size, weights=image_data_utils.get_sampler_weights(train.subclasses))
+        train_dataloader = InfiniteDataLoader(tr, batch_size, weights=image_data_utils.get_sampler_weights(tr.subclasses))
 
 
     if verbose:
@@ -127,7 +131,6 @@ for loss_class, loss_args in zip([erm_class, gdro_class], [erm_args, gdro_args])
         optimizer_class=optimizer_class,
         optimizer_args=optimizer_args,
         device=device,
-        scheduler=None,
         verbose=verbose,
         record=True,
         num_subclasses=num_subclasses
