@@ -167,7 +167,7 @@ def run_trials(num_trials,
                                      num_subclasses)
 
         if record:
-            trial_accuracies, trial_q_data, trial_g_data = trial_results
+            trial_accuracies, trial_q_data = trial_results
             accuracies.extend(trial_accuracies)
 
             if isinstance(loss_fn, GDROLoss):
@@ -187,6 +187,6 @@ def run_trials(num_trials,
         roc_data[1] = labels
 
     if record:
-        return accuracies, q_data, g_data, roc_data
+        return accuracies, q_data, roc_data
     else:
         return None

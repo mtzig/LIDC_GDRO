@@ -119,7 +119,7 @@ for loss_class, loss_args in zip([erm_class, gdro_class], [erm_args, gdro_args])
     if verbose:
         print(f"Running trials: {fn_name}")
 
-    accuracies, q_data, g_data, roc_data = run_trials(
+    accuracies, q_data, roc_data = run_trials(
         num_trials=trials,
         epochs=epochs,
         train_dataloader=train_dataloader,
@@ -137,7 +137,6 @@ for loss_class, loss_args in zip([erm_class, gdro_class], [erm_args, gdro_args])
     )
     results["Accuracies"][fn_name] = accuracies
     results["q"][fn_name] = q_data
-    results["g"][fn_name] = g_data
     results["ROC"]["labels"] = roc_data[1].tolist()
     results["ROC"][fn_name] = roc_data[0].tolist()
 
@@ -155,13 +154,7 @@ q_df = pd.DataFrame(
         names=["trial", "epoch", "subtype"]
     )
 )
-g_df = pd.DataFrame(
-    results["g"],
-    index=pd.MultiIndex.from_product(
-        [range(trials), range(epochs), ["ERM Weight", "GDRO Weight"]],
-        names=["trial", "epoch", "loss_fn"]
-    )
-)
+
 roc_df = pd.DataFrame(results["ROC"])
 
 now = datetime.now()
@@ -171,12 +164,10 @@ os.mkdir(results_dir)
 
 accuracies_df.to_csv(results_dir + f'accuracies.csv')
 q_df.to_csv(results_dir + f'q.csv')
-g_df.to_csv(results_dir + f'g.csv')
 roc_df.to_csv(results_dir + f'roc.csv', index=False)
 
 if args.colab:
     from google.colab import files
     files.download(results_dir + f'accuracies.csv')
     files.download(results_dir + f'q.csv')
-    files.download(results_dir + f'g.csv')
     files.download(results_dir + f'roc.csv')
