@@ -116,7 +116,7 @@ def create_dataset(data, is_dataframe=True):
 
     return X,y, c
 
-def train_val_test_datasets(df, split_path, batch_size):
+def train_val_test_datasets(df, split_path):
     # get train/test flags
     train_split = pd.read_csv(split_path)
 
