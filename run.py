@@ -36,9 +36,9 @@ if args.e2e:
 else:
     model_class = models.NeuralNetwork
     if args.cnn:
-        model_args = [512, 64, 36, 2]
+        model_args = [512, 64, 36, 4]
     else:
-        model_args = [64, 36, 2]
+        model_args = [64, 36, 4]
 optimizer_class = torch.optim.Adam
 
 trials = 100
