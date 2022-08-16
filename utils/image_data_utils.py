@@ -255,7 +255,7 @@ def get_features(feature_file='./data/erm_cluster_cnn_features_1.csv',
 
         y = torch.tensor(d['malignancy_b'].values, device=device, dtype=torch.long)
         c = torch.tensor(d['clusters'].values, device=device)
-        datas.append((X, y, c))
+        datas.append((X, c, c))
 
     return datas
 

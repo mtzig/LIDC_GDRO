@@ -43,7 +43,7 @@ class TransferModel18(nn.Module):
 
         # Fully-connected layer
         self.model.fc = nn.Sequential(
-            nn.Linear(in_features=512, out_features=2, bias=True, device=device),
+            nn.Linear(in_features=512, out_features=4, bias=True, device=device),
         )
 
         for layer in self.model.fc:

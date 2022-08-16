@@ -114,7 +114,7 @@ def create_dataset(data, is_dataframe=True):
     else:
         X, y, c = data
 
-    return X,y, c
+    return X,c, c
 
 def train_val_test_datasets(df, split_path):
     # get train/test flags
