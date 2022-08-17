@@ -18,6 +18,7 @@ parser.add_argument('--cnn', action='store_true')
 parser.add_argument('--e2e', action='store_true')
 parser.add_argument('--verbose', action='store_true')
 parser.add_argument('--colab', action='store_true')
+parser.add_argument('--trials', default=100)
 
 args = parser.parse_args()
 
@@ -41,7 +42,7 @@ else:
         model_args = [64, 36, 4]
 optimizer_class = torch.optim.Adam
 
-trials = 100
+trials = int(args.trials)
 epochs = 100
 batch_size = 128
 split_path = "train_test_splits/LIDC_data_split.csv"
