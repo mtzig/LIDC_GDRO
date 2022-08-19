@@ -12,14 +12,14 @@ from datasets import SubclassedDataset
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('subclass_column')
-parser.add_argument('--test_name', default='test')
-parser.add_argument('--cnn', action='store_true')
-parser.add_argument('--e2e', action='store_true')
-parser.add_argument('--designed', action='store_true')
-parser.add_argument('--verbose', action='store_true')
-parser.add_argument('--colab', action='store_true')
-parser.add_argument('--trials', default=100)
+parser.add_argument('stratification', help='The stratification type to use, available options are "spic_groups", "malignancy", and "cluster"')
+parser.add_argument('--test_name', '-n', default='test', help='The name of the test to run (defaults to "test"), the output files will be saved in the directory ./test_results/[name]/')
+parser.add_argument('--cnn', action='store_true', help='Use the CNN (deep) feature data representation')
+parser.add_argument('--e2e', action='store_true', help='Use the image data representation (train CNN "end to end")')
+parser.add_argument('--designed', '-d', action='store_true', help='Use the designed feature data representation (optional, if no data representation is specified designed is used by default)')
+parser.add_argument('--verbose', '-v', action='store_true', help='Print the progress')
+parser.add_argument('--colab', '-c', action='store_true', help='Add this argument to properly download the results if the script is being run through Google Colab')
+parser.add_argument('--trials', '-t', default=100, help='The number of trials to run, defaults to 100')
 
 
 args = parser.parse_args()
@@ -49,7 +49,7 @@ epochs = 100
 batch_size = 128
 split_path = "data/train_test_splits/LIDC_data_split_old.csv"
 subclass_path = 'subclass_labels/subclasses.csv'
-subclass_column = args.subclass_column
+subclass_column = args.stratification
 feature_path = 'LIDC_20130817_AllFeatures2D_MaxSlicePerNodule_inLineRatings.csv'
 
 results_root_dir = 'test_results/'
