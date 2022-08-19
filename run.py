@@ -112,7 +112,7 @@ for loss_class, loss_args in zip([erm_class, gdro_class], [erm_args, gdro_args])
 
     tr = SubclassedDataset(*train)
 
-    if fn_name == erm_class:
+    if fn_name == erm_class.__name__:
         train_dataloader = InfiniteDataLoader(tr, batch_size)
     else:
         train_dataloader = InfiniteDataLoader(tr, batch_size, weights=image_data_utils.get_sampler_weights(tr.subclasses))
@@ -161,8 +161,9 @@ roc_df = pd.DataFrame(results["ROC"])
 
 now = datetime.now()
 
-results_dir = results_root_dir + f'{test_name}_{now.strftime("%Y%m%d_%H%M%S")}/'
-os.mkdir(results_dir)
+results_dir = results_root_dir + f'{test_name}/'
+if not os.path.isdir(results_dir):
+    os.mkdir(results_dir)
 
 accuracies_df.to_csv(results_dir + f'accuracies.csv')
 q_df.to_csv(results_dir + f'q.csv')
