@@ -47,7 +47,7 @@ optimizer_class = torch.optim.Adam
 trials = int(args.trials)
 epochs = 100
 batch_size = 128
-split_path = "train_test_splits/LIDC_data_split.csv"
+split_path = "data/train_test_splits/LIDC_data_split_old.csv"
 subclass_path = 'subclass_labels/subclasses.csv'
 subclass_column = args.subclass_column
 feature_path = 'LIDC_20130817_AllFeatures2D_MaxSlicePerNodule_inLineRatings.csv'
@@ -74,7 +74,7 @@ else:
         subclass_column=subclass_column
     )
 
-    train, val, test = data_utils.train_val_test_datasets(df, split_path="data/train_test_splits/LIDC_data_split.csv")
+    train, val, test = data_utils.train_val_test_datasets(df, split_path=split_path)
 
 
 
