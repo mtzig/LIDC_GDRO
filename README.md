@@ -25,3 +25,7 @@ python run.py spic_groups --designed --test_name spic_designed --verbose --trial
 The different stratification methods are `spic_groups`, `cluster`, `malignancy`.
 
 The different features are `--designed`, `--e2e` (image end to end), `--cnn` (deep features)
+
+## License
+
+This source code is released under the MIT license, included [here](LICENSE).
