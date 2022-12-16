@@ -10,7 +10,6 @@ import argparse
 from dataloaders import InfiniteDataLoader
 from datasets import SubclassedDataset
 import glob
-import tensorflow as tf
 import torch.optim.lr_scheduler as schedulers
 import torch.optim as optimizers
 
@@ -36,7 +35,8 @@ wd_erm = 0.005
 wd_dro = 0.005
 eta = 0.01
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
+# device = 'cuda' if torch.cuda.is_available() else 'mps'  if torch.backends.mps.is_available() and torch.backends.mps.is_built() else 'cpu'
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 if args.e2e:
     model_class = models.TransferModel18

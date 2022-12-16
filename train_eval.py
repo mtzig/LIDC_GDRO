@@ -118,6 +118,8 @@ def train_epochs(epochs,
         # if isinstance(loss_fn, GDROLoss):
         #     q_data = []
 
+    best_model = None
+
     for epoch in range(epochs):
         if verbose:
             print(f'Epoch {epoch + 1} / {epochs}')
@@ -137,20 +139,17 @@ def train_epochs(epochs,
                 max_val_accuacy = temp_val_accuracy
                 best_epoch = epoch
                 print('I am saving the best ERM model at Epoch: ',best_epoch)
-                torch.save(model.state_dict(), 'D:\LIDC_GDRO_UseValidation\Best_model.pth')
+                # torch.save(model.state_dict(), 'D:\LIDC_GDRO_UseValidation\Best_model.pth')
+                best_model = model.state_dict().copy()
 
         else:
             if temp_worst_accuracy >= max_worst_accuracy:
                 max_worst_accuracy = temp_worst_accuracy
                 best_epoch = epoch
                 print('I am saving the best dro model at Epoch: ', best_epoch)
-                torch.save(model.state_dict(), 'D:\LIDC_GDRO_UseValidation\Best_model.pth')
+                # torch.save(model.state_dict(), 'D:\LIDC_GDRO_UseValidation\Best_model.pth')
+                best_model = model.state_dict().copy()
 
-            #  if temp_val_accuracy >= max_val_accuacy:
-            #     max_val_accuacy = temp_val_accuracy
-            #     best_epoch = epoch
-            #     print('I am saving the best dro model at Epoch: ',best_epoch)
-            #     torch.save(model.state_dict(), 'D:\LIDC_GDRO_Debug\Best_model.pth')
 
         if scheduler and erm_flag:
             scheduler.step(evaluate(val_dataloader, model, num_subclasses=num_subclasses)[0])
@@ -171,7 +170,8 @@ def train_epochs(epochs,
     # Loading
     
 
-    model.load_state_dict(torch.load('D:\LIDC_GDRO_UseValidation\Best_model.pth'))
+    # model.load_state_dict(torch.load('D:\LIDC_GDRO_UseValidation\Best_model.pth'))
+    model.load_state_dict(best_model)
     model = model.to(device)
     best_test_accuracies = evaluate(test_dataloader, model, num_subclasses=num_subclasses)
     accuracies_BEST.extend(best_test_accuracies)
