@@ -93,7 +93,7 @@ if args.e2e:
         accuracies, accuracies_train,accuracies_val,best_test_accuracies = run_trials_images(
         
             epochs=epochs,
-            csv_files = glob.glob(os.path.join('./data/train_test_splits/Nodule_Level_30Splits/', "*.csv")),
+            split_csv = glob.glob(os.path.join('./data/train_test_splits/Nodule_Level_30Splits/', "*.csv")),
             fn_name = fn_name,
             batch_size = batch_size,
             subclass_column = subclass_column,
