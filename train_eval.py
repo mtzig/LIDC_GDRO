@@ -335,13 +335,16 @@ def run_trials_images(
 
     
     
-    num_trials = len(csv_files)
+    # num_trials = len(csv_files)
+    # For Thomas Experiment
+    num_trials = 10
 
     for n in range(num_trials):
         if verbose:
             print(f"Trial {n + 1}/{num_trials}")
 
-        individual_split_path = csv_files[n]
+        # individual_split_path = csv_files[n]
+        individual_split_path = csv_files[0] # for thomas experiment
         train, val, test = image_data_utils.get_features(split_file = individual_split_path,device=device, images=True, subclass=subclass_column)
 
         val_dataloader = InfiniteDataLoader(SubclassedDataset(*val), len(val))

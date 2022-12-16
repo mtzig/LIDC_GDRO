@@ -33,7 +33,48 @@ class TransferModel18(nn.Module):
         super(TransferModel18, self).__init__()
 
         if pretrained:
-            self.model = torchvision.models.resnet18(weights='DEFAULT').to(device)
+            # self.model = torchvision.models.resnet18(weights='DEFAULT').to(device)
+            self.model = torchvision.models.resnet18(pretrained = True).to(device)
+        else:
+            self.model = torchvision.models.resnet18().to(device)
+
+
+        if freeze:
+            # for param in self.model.parameters():
+            #     param.requires_grad = False
+
+            lt=8
+            cntr = 0
+            for child in self.model.children():
+                cntr+=1
+
+                if cntr < lt:
+                    for param in child.parameters():
+                        param.requires_grad = False
+
+        # Fully-connected layer
+        self.model.fc = nn.Sequential(
+            nn.Linear(in_features=512, out_features=2, bias=True, device=device),
+        )
+
+        for layer in self.model.fc:
+            if hasattr(layer, 'weight'):
+                nn.init.xavier_uniform_(layer.weight)
+
+    def forward(self, x):
+        return self.model(x).squeeze()
+
+class TransferModel18_Arun(nn.Module):
+    """
+    ResNet18 transfer learning model
+    By default we set the fully-connected classifier layer to a single 512x2 layer
+    """
+    def __init__(self, pretrained=True, freeze=False, device='cpu'):
+        super(TransferModel18_Arun, self).__init__()
+
+        if pretrained:
+            # self.model = torchvision.models.resnet18(weights='DEFAULT').to(device)
+            self.model = torchvision.models.resnet18(pretrained = True).to(device)
         else:
             self.model = torchvision.models.resnet18().to(device)
 
@@ -46,9 +87,9 @@ class TransferModel18(nn.Module):
             nn.Linear(in_features=512, out_features=2, bias=True, device=device),
         )
 
-        for layer in self.model.fc:
-            if hasattr(layer, 'weight'):
-                nn.init.xavier_uniform_(layer.weight)
+        # for layer in self.model.fc:
+        #     if hasattr(layer, 'weight'):
+        #         nn.init.xavier_uniform_(layer.weight)
 
     def forward(self, x):
         return self.model(x).squeeze()

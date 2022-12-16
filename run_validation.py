@@ -93,7 +93,7 @@ if args.e2e:
         accuracies, accuracies_train,accuracies_val,best_test_accuracies = run_trials_images(
         
             epochs=epochs,
-            split_csv = glob.glob(os.path.join('./data/train_test_splits/Nodule_Level_30Splits/', "*.csv")),
+            csv_files = glob.glob(os.path.join('./data/train_test_splits/Nodule_Level_30Splits/', "*.csv")),
             fn_name = fn_name,
             batch_size = batch_size,
             subclass_column = subclass_column,
@@ -169,7 +169,7 @@ if args.designed:
 accuracies_df_test = pd.DataFrame(
 results["Accuracies"],
 index=pd.MultiIndex.from_product(
-    [range(30), range(epochs), subtypes],
+    [range(trials), range(epochs), subtypes],
     names=["trial", "epoch", "subtype"]
     )
     )
@@ -177,7 +177,7 @@ index=pd.MultiIndex.from_product(
 accuracies_df_train = pd.DataFrame(
 results["Accuracies_Train"],
 index=pd.MultiIndex.from_product(
-    [range(30), range(epochs), subtypes],
+    [range(trials), range(epochs), subtypes],
     names=["trial", "epoch", "subtype"]
     )
     )
@@ -186,7 +186,7 @@ index=pd.MultiIndex.from_product(
 accuracies_df_Validation = pd.DataFrame(
 results["Accuracies_Validation"],
 index=pd.MultiIndex.from_product(
-    [range(30), range(epochs), subtypes],
+    [range(trials), range(epochs), subtypes],
     names=["trial", "epoch", "subtype"]
     )
     )
@@ -194,7 +194,7 @@ index=pd.MultiIndex.from_product(
 accuracies_BEST_df = pd.DataFrame(
 BEST_EPOCH_RESULTS["Best_Test_Accuracy"],
 index=pd.MultiIndex.from_product(
-    [range(30),subtypes],
+    [range(trials),subtypes],
     names=["trial", "subtype"]
     )   
     )
