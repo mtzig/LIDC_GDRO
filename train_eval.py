@@ -111,12 +111,10 @@ def train_epochs(epochs,
         accuracies_train = []
         accuracies_validation = []
         accuracies_BEST = []
-        max_val_accuacy = 0
-        max_worst_accuracy = 0
-        best_epoch = 0
-        # q_data = None
-        # if isinstance(loss_fn, GDROLoss):
-        #     q_data = []
+
+    max_val_accuracy = 0
+    max_worst_accuracy = 0
+    best_epoch = 0
 
     best_model = None
 
@@ -135,8 +133,8 @@ def train_epochs(epochs,
         
 
         if erm_flag:           
-            if temp_val_accuracy >= max_val_accuacy:
-                max_val_accuacy = temp_val_accuracy
+            if temp_val_accuracy >= max_val_accuracy:
+                max_val_accuracy = temp_val_accuracy
                 best_epoch = epoch
                 print('I am saving the best ERM model at Epoch: ',best_epoch)
                 # torch.save(model.state_dict(), 'D:\LIDC_GDRO_UseValidation\Best_model.pth')
@@ -167,14 +165,10 @@ def train_epochs(epochs,
             accuracies_train.extend(epoch_accuracies_train)
             accuracies_validation.extend(epoch_accuracies_val)
     
-    # Loading
-    
-
-    # model.load_state_dict(torch.load('D:\LIDC_GDRO_UseValidation\Best_model.pth'))
-    model.load_state_dict(best_model)
-    model = model.to(device)
-    best_test_accuracies = evaluate(test_dataloader, model, num_subclasses=num_subclasses)
-    accuracies_BEST.extend(best_test_accuracies)
+            model.load_state_dict(best_model)
+            model = model.to(device)
+            best_test_accuracies = evaluate(test_dataloader, model, num_subclasses=num_subclasses)
+            accuracies_BEST.extend(best_test_accuracies)
 
            
 
