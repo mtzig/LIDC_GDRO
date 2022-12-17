@@ -128,15 +128,18 @@ def train_epochs(epochs,
         temp_val_accuracy = temp_val_accuracies[0]
         temp_worst_accuracy = min(temp_val_accuracies[1:])
         
-        print('val_overall: ', temp_val_accuracy)
-        print('val_worst: ', temp_worst_accuracy)
+        if verbose:
+            print('val_overall: ', temp_val_accuracy)
+            print('val_worst: ', temp_worst_accuracy)
         
 
         if erm_flag:           
             if temp_val_accuracy >= max_val_accuracy:
                 max_val_accuracy = temp_val_accuracy
                 best_epoch = epoch
-                print('I am saving the best ERM model at Epoch: ',best_epoch)
+
+                if verbose:
+                    print('I am saving the best ERM model at Epoch: ',best_epoch)
                 # torch.save(model.state_dict(), 'D:\LIDC_GDRO_UseValidation\Best_model.pth')
                 best_model = model.state_dict().copy()
 
@@ -144,18 +147,24 @@ def train_epochs(epochs,
             if temp_worst_accuracy >= max_worst_accuracy:
                 max_worst_accuracy = temp_worst_accuracy
                 best_epoch = epoch
-                print('I am saving the best dro model at Epoch: ', best_epoch)
+
+                if verbose:
+                    print('I am saving the best dro model at Epoch: ', best_epoch)
                 # torch.save(model.state_dict(), 'D:\LIDC_GDRO_UseValidation\Best_model.pth')
                 best_model = model.state_dict().copy()
 
 
         if scheduler and erm_flag:
             scheduler.step(evaluate(val_dataloader, model, num_subclasses=num_subclasses)[0])
-            print('ERM Learning learning rate is: ', optimizer.param_groups[0]['lr'])
+
+            if verbose:
+                print('ERM Learning learning rate is: ', optimizer.param_groups[0]['lr'])
         
         if scheduler and not erm_flag:
             scheduler.step(min(evaluate(val_dataloader, model, num_subclasses=num_subclasses)[1:]))
-            print('DRO Learning learning rate is: ', optimizer.param_groups[0]['lr'])
+
+            if verbose:
+                print('DRO Learning learning rate is: ', optimizer.param_groups[0]['lr'])
 
         if record:
             epoch_accuracies = evaluate(test_dataloader, model, num_subclasses=num_subclasses)

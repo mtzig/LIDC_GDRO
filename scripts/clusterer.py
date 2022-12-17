@@ -47,7 +47,7 @@ def cluster_one_split(split_num, images_df, split_file, split_df, device):
     for _ in tqdm(range(50)):
         results = None
         while results is None:
-            results = do_clustering(tr_loader, cv_loader, tst_loader, images_df, device=device)
+            results = do_clustering(tr_loader, cv_loader, tst_loader, images_df, split_path=split_file, split_num=split_num, device=device)
   
         label_df = results[0]
         labels.append(label_df['clusters'].values)

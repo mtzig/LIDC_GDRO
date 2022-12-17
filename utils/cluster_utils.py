@@ -111,7 +111,7 @@ def features_to_df(noduleID, features):
 
     return df_features_all
 
-def split_features(df_features_all, splits_path='./data/train_test_splits/LIDC_data_split.csv'):
+def split_features(df_features_all, splits_path='./data/train_test_splits/LIDC_data_split.csv', split_num=None):
     
     df_splits = pd.read_csv(splits_path, index_col=0)
 
@@ -120,8 +120,10 @@ def split_features(df_features_all, splits_path='./data/train_test_splits/LIDC_d
     # df_features.sort_values('noduleID', inplace=True)
     df_features.reset_index(drop=True, inplace=True)
 
-    train_idx = df_splits['split'] == 0
-    cv_test_idx = df_splits['split'] != 0
+    split = 'split' if split_num is None else f'split_{split_num}'
+
+    train_idx = df_splits[split] == 0
+    cv_test_idx = df_splits[split] != 0
 
     df_features_train = df_features[train_idx]
     df_features_cv_test = df_features[cv_test_idx]
@@ -189,7 +191,7 @@ def get_cluster_label(t_e, cvt_e, t_f, easy, hard):
 
     return train_l, cv_test_l
 
-def do_clustering(tr_loader, cv_loader, tst_loader, images_df, get_cv_embeds=False, device='cpu'):
+def do_clustering(tr_loader, cv_loader, tst_loader, images_df, split_path='./data/train_test_splits/LIDC_data_split.csv', split_num=None, get_cv_embeds=False, device='cpu'):
 
         model=TransferModel18(pretrained=True, freeze=False, device=device)
         train_erm_cluster(model, device=device, loaders=(tr_loader, cv_loader, tst_loader))
@@ -199,7 +201,7 @@ def do_clustering(tr_loader, cv_loader, tst_loader, images_df, get_cv_embeds=Fal
         df_features_all = features_to_df(noduleID, features)
 
         #features and corresponding malignancy, noduleID
-        train_f, cv_test_f = split_features(df_features_all)
+        train_f, cv_test_f = split_features(df_features_all, split_path=split_path, split_num=split_num)
 
         reducer = UMAP(random_state=8)
         reducer.fit(train_f[0])
