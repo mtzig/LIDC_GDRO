@@ -181,7 +181,8 @@ def get_features(feature_file='./data/erm_cluster_cnn_features_1.csv',
                  images=False,
                  features=None,
                  device='cpu',
-                 subclass='cluster'):
+                 subclass='cluster',
+                 split_num = None):
 
     '''
     gets features in their train, cv and test splits
@@ -224,8 +225,11 @@ def get_features(feature_file='./data/erm_cluster_cnn_features_1.csv',
     df_features['malignancy_b'] = df_splits['malignancy_b']
 
     dfs = []
+
+    split = 'split' if split_num is None else f'split_{split_num}'
+
     for i in range(3):
-        dfs.append(df_features.loc[(df_splits['split'] == i).values])
+        dfs.append(df_features.loc[(df_splits[split] == i).values])
 
     datas = []
     for i, d in enumerate(dfs):

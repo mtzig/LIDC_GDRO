@@ -50,8 +50,21 @@ def train_erm_cluster(model, device='cpu', loaders=None):
 
     #train model
     epochs = 20
-    train_epochs(epochs, tr_loader, tst_loader, model, loss_fn, optimizer, 
-                 scheduler=scheduler, verbose=False, num_subclasses=3)
+    train_epochs(epochs,
+                 True,
+                 tr_loader,
+                 cv_loader,
+                 tst_loader,
+                 None,
+                 model,
+                 loss_fn,
+                 optimizer,
+                 device,
+                 scheduler=scheduler,
+                 verbose=False,
+                 record=False,
+                 num_subclasses=4)
+
     
 
 def extract_features(model, images_df=None, device='cpu'):
