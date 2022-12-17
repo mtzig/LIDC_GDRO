@@ -111,9 +111,9 @@ def features_to_df(noduleID, features):
 
     return df_features_all
 
-def split_features(df_features_all, splits_path='./data/train_test_splits/LIDC_data_split.csv', split_num=None):
+def split_features(df_features_all, split_path='./data/train_test_splits/LIDC_data_split.csv', split_num=None):
     
-    df_splits = pd.read_csv(splits_path, index_col=0)
+    df_splits = pd.read_csv(split_path, index_col=0)
 
     # Get features of only determinate nodules
     df_features = df_features_all[df_features_all['noduleID'].isin(df_splits['noduleID'])]

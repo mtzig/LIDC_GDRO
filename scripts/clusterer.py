@@ -58,7 +58,7 @@ def cluster_one_split(split_num, images_df, split_file, split_df, device):
     labels_df.sort_values('noduleID', inplace=True)
     labels_df.reset_index(drop=True, inplace=True)
 
-    labels_df.to_csv(f'./split_{split_num}_all_clusters.csv')
+    labels_df.to_csv(f'./cluster_results/split_{split_num}_all_clusters.csv')
 
     mode_val=labels_df.drop(['noduleID'], axis=1).mode(axis=1).min(axis=1).values.astype(int)
 
@@ -70,6 +70,7 @@ if __name__ == "__main__":
     split_file = './data/train_test_splits/Nodule_Level_30Splits/nodule_split_all.csv'
     split_df = pd.read_csv(split_file, index_col=0)
 
+    print('Loading images')
     images_df = images_to_df()
 
     df_clusters = pd.DataFrame()
@@ -81,7 +82,7 @@ if __name__ == "__main__":
         df_clusters[f'cluster_{split_num}'] = mode_vals
 
         print(f'Saving results for random split {split_num}')
-        df_clusters.to_csv(f'./all_clusters.csv')
+        df_clusters.to_csv(f'./cluster_results/all_clusters.csv')
 
     
 
