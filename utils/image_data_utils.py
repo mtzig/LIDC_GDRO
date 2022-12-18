@@ -221,6 +221,10 @@ def get_features(feature_file='./data/erm_cluster_cnn_features_1.csv',
     df_features.sort_values('noduleID', inplace=True)
     df_features.reset_index(drop=True, inplace=True)
 
+    # each random split has different subclass labels associated
+    if subclass == 'cluster' and split_num is not None:
+        subclass = f'cluster_{split_num}'
+
     df_features['clusters'] = df_subclass[subclass]
     df_features['malignancy_b'] = df_splits['malignancy_b']
 

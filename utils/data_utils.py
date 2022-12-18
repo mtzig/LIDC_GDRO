@@ -116,14 +116,16 @@ def create_dataset(data, is_dataframe=True):
 
     return X,y, c
 
-def train_val_test_datasets(df, split_path):
+def train_val_test_datasets(df, split_path, split_num=None):
     # get train/test flags
     train_split = pd.read_csv(split_path)
 
+    split = 'split' if split_num is None else f'split_{split_num}'
+
     # create train/test dataframes
-    train_df = df[df["noduleID"].isin(train_split[train_split["split"] == 0]["noduleID"].values)]
-    val_df = df[df["noduleID"].isin(train_split[train_split["split"] == 1]["noduleID"].values)]
-    test_df = df[df["noduleID"].isin(train_split[train_split["split"] == 2]["noduleID"].values)]
+    train_df = df[df["noduleID"].isin(train_split[train_split[split] == 0]["noduleID"].values)]
+    val_df = df[df["noduleID"].isin(train_split[train_split[split] == 1]["noduleID"].values)]
+    test_df = df[df["noduleID"].isin(train_split[train_split[split] == 2]["noduleID"].values)]
 
     train = create_dataset(train_df)
     val = create_dataset(val_df)
