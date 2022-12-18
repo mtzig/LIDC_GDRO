@@ -58,12 +58,12 @@ feature_path = 'LIDC_20130817_AllFeatures2D_MaxSlicePerNodule_inLineRatings.csv'
 
 verbose = args.verbose
 
-for split_num in range(3):
+for split_num in range(30):
 
     if args.e2e:
         model_class = models.TransferModel18
         model_args = [True, False, device]
-        epochs = 2
+        epochs = 45
 
     else:
         model_class = models.NeuralNetwork
