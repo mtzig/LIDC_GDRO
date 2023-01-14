@@ -37,6 +37,7 @@ def test_sc(tr_loader, cv_loader, tst_loader, images_df, split_path='./data/trai
 
     benig_max = np.argmin(check_cluster(train_e[train_f[1] <= 1]))+1
 
+    return malig_max, benig_max
 
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 split_file = './data/train_test_splits/Nodule_Level_30Splits/nodule_split_all.csv'
