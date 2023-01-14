@@ -34,15 +34,15 @@ def test_sc(tr_loader, cv_loader, tst_loader, images_df, split_path='./data/trai
         train_f[0]), reducer.transform(cv_test_f[0])
 
     malig_max = np.argmin(check_cluster(train_e[train_f[1] > 1]))+1
-
+    print(check_cluster(train_e[train_f[1] > 1]))
     benig_max = np.argmin(check_cluster(train_e[train_f[1] <= 1]))+1
 
     return malig_max, benig_max
 
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
-split_file = './data/train_test_splits/Nodule_Level_30Splits/nodule_split_all.csv'
+split_file = './data/train_test_splits/LIDC_data_split.csv' #'./data/train_test_splits/Nodule_Level_30Splits/nodule_split_all.csv'
 split_df = pd.read_csv(split_file, index_col=0)
-split_num = 0
+# split_num = 0
 
 print('Loading images')
 images_df = images_to_df()
@@ -50,7 +50,7 @@ images_df = images_to_df()
 df_clusters = pd.DataFrame()
 
 train_data, cv_data, test_data = get_features(
-    images=True, features=images_df, split_file=split_file, device=DEVICE, subclass='malignancy', split_num=split_num)
+    images=True, features=images_df, device=DEVICE, subclass='malignancy')
 
 # datasets
 tr = SubclassedDataset(*train_data)
@@ -65,6 +65,5 @@ tst_loader = InfiniteDataLoader(tst, len(tst))
 for trial in range(30):
     print(f'==============  Trial {trial} ==============')
 
-    m, b = test_sc(tr_loader, cv_loader, tst_loader, images_df,
-                   split_path=split_file, split_num=split_num, device=DEVICE)
+    m, b = test_sc(tr_loader, cv_loader, tst_loader, images_df, device=DEVICE)
     print(f'Malginant max sc: {m} Benign max sc:{b}')
