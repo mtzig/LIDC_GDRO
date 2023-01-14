@@ -33,9 +33,8 @@ def test_sc(tr_loader, cv_loader, tst_loader, images_df, split_path='./data/trai
     train_e, cv_test_e = reducer.transform(
         train_f[0]), reducer.transform(cv_test_f[0])
 
-    malig_max = np.argmin(check_cluster(train_e[train_f[1] > 1]))+1
-    print(check_cluster(train_e[train_f[1] > 1]))
-    benig_max = np.argmin(check_cluster(train_e[train_f[1] <= 1]))+1
+    malig_max = np.argmax(check_cluster(train_e[train_f[1] > 1]))+1
+    benig_max = np.argmax(check_cluster(train_e[train_f[1] <= 1]))+1
 
     return malig_max, benig_max
 
