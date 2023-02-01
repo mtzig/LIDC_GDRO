@@ -36,7 +36,7 @@ def test_sc(tr_loader, cv_loader, tst_loader, images_df, split_path='./data/trai
     malig_max = np.argmax(check_cluster(train_e[train_f[1] > 1]))+2
     benig_max = np.argmax(check_cluster(train_e[train_f[1] <= 1]))+2
 
-    return malig_max, benig_max
+    return malig_max, benig_max, df_features_all
 
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 split_file = './data/train_test_splits/LIDC_data_split.csv' #'./data/train_test_splits/Nodule_Level_30Splits/nodule_split_all.csv'
@@ -64,5 +64,6 @@ tst_loader = InfiniteDataLoader(tst, len(tst))
 for trial in range(30):
     print(f'==============  Trial {trial} ==============')
 
-    m, b = test_sc(tr_loader, cv_loader, tst_loader, images_df, device=DEVICE)
+    m, b,df_features = test_sc(tr_loader, cv_loader, tst_loader, images_df, device=DEVICE)
+    df_features.to_csv("./data/CNN_features/CNNeatures_{}.csv".format(trial))
     print(f'Malginant max sc: {m} Benign max sc:{b}')
