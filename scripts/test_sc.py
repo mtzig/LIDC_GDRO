@@ -46,10 +46,12 @@ split_df = pd.read_csv(split_file, index_col=0)
 print('Loading images')
 images_df = images_to_df()
 
-df_clusters = pd.DataFrame()
 
 train_data, cv_data, test_data = get_features(
     images=True, features=images_df, device=DEVICE, subclass='malignancy')
+
+
+
 
 # datasets
 tr = SubclassedDataset(*train_data)
@@ -61,9 +63,20 @@ tr_loader = InfiniteDataLoader(tr, batch_size=512)
 cv_loader = InfiniteDataLoader(cv, len(cv))
 tst_loader = InfiniteDataLoader(tst, len(tst))
 
+m_list = []
+b_list = []
+
 for trial in range(30):
     print(f'==============  Trial {trial} ==============')
 
     m, b,df_features = test_sc(tr_loader, cv_loader, tst_loader, images_df, device=DEVICE)
+
+    m_list.append(m)
+    b_list.append(b)
+
     df_features.to_csv("./data/CNN_features/CNNeatures_{}.csv".format(trial))
+
     print(f'Malginant max sc: {m} Benign max sc:{b}')
+
+do_clustering_df = pd.DataFrame({'m': m_list, 'b': b_list})
+do_clustering_df.to_csv('data/CNN_features/do_clustering_df.csv')
